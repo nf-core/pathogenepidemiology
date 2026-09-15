@@ -133,11 +133,13 @@
                     "@id": "https://orcid.org/0009-0004-7791-6364"
                 },
                 {
+
                     "@id": "#bf5668e1-60db-4fb4-b0de-175c8e8ed06e"
                 }
             ],
             "dateCreated": "",
             "dateModified": "2026-09-01T12:58:28Z",
+
             "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
             "keywords": ["nf-core", "nextflow"],
             "license": ["MIT"],
@@ -169,6 +171,7 @@
             "instance": [
                 {
                     "@id": "#cd930fa2-1766-4316-9829-b793cc9346bd"
+
                 }
             ],
             "mainEntity": {
@@ -322,6 +325,7 @@
         },
         {
             "@id": "#bf5668e1-60db-4fb4-b0de-175c8e8ed06e",
+
             "@type": "Person",
             "name": "more tbc"
         }
