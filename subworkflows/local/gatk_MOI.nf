@@ -1,7 +1,7 @@
 // GATK4 Steps from Niare et al. workflow: nf-core modules and placeholders
 // (at this point just for record keeping)
 
-// step:gatk SamFormatConverter
+// step:gatk SamFormatConverter -- no need, we already have bams
 include { GATK4_CLEANSAM                  } from '../modules/nf-core/gatk4/cleansam/main'
 include { PICARD_SORTSAM                  } from '../modules/nf-core/picard/sortsam/main'
 include { GATK4_MARKDUPLICATES            } from '../modules/nf-core/gatk4/markduplicates/main'
@@ -24,6 +24,20 @@ include {
   GATK4_APPLYVQSR as GATK4_VQSRSNPS
   } from '../modules/nf-core/gatk4/applyvqsr/main'
 
-workflow {
-    
+workflow GATK_MOI {
+    take:
+    ch_aligned_s
+    ch_queryref
+
+    main:
+    ch_bm3clean = GATK4_CLEANSAM(ch_aligned_s, ch_queryref)
+
+
+
+    emit:
+
+
+
 }
+
+workflow { GATK_MOI(params.bwamem3_outdir, params.) }
