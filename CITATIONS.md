@@ -1,4 +1,4 @@
-                                                              nf-core/pathogenepidemiology: Citations
+                                                  nf-core/pathogenepidemiology: Citations
 
 nf-core
 
