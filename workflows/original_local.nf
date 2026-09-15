@@ -15,19 +15,47 @@ params.clair3model = params.clair3model ?: "r1041_e82_400bps_${params.ont_qual}_
 // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 
 
-include { PREPARE_REFERENCES } from '../subworkflows/local/prepare_references.nf'
-include { PREPROCESS_READS   } from '../subworkflows/local/preprocess_reads.nf'
-include { MINIMAP2_INDEX     } from '../modules/nf-core/minimap2/index/main'
-include { MINIMAP2_ALIGN     } from '../modules/nf-core/minimap2/align/main' 
-include { MULTIQC            } from '../modules/nf-core/multiqc/main'
-include { CLAIR3_CUSTOM      } from '../modules/local/clair3_custom/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
+include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
+include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf'
+include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
+include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main' 
+include { MULTIQC              } from '../modules/nf-core/multiqc/main'
+include { CLAIR3_CUSTOM        } from '../modules/local/clair3_custom/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 // use the CLAIR3 process when you want to use a locally-stored clair3 model 
    // Usage: tuple(meta, bam, bai, null, user_model, platform)
-include { CLAIR3             } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
-include { BWAMEM3_INDEX      } from '../modules/nf-core/bwamem3/index/main'
-include { BWAMEM3_MEM        } from '../modules/nf-core/bwamem3/mem/main'
+include { CLAIR3               } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
+include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
+include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
+
+
+// GATK4 Steps from Niare et al. workflow: nf-core modules and placeholders
+// (at this point just for record keeping)
+
+// step:gatk SamFormatConverter
+include { GATK4_CLEANSAM                  } from '../modules/nf-core/gatk4/cleansam/main'
+include { PICARD_SORTSAM                  } from '../modules/nf-core/picard/sortsam/main'
+include { GATK4_MARKDUPLICATES            } from '../modules/nf-core/gatk4/markduplicates/main'
+// step: gatk DepthOfCoverage
+include { PICARD_COLLECTINSERTSIZEMETRICS } from '../modules/nf-core/picard/collectinsertsizemetrics/main'
+include { GATK4_HAPLOTYPECALLER           } from '../modules/nf-core/gatk4/haplotypecaller/main'
+include { GATK4_GENOMICSDBIMPORT          } from '../modules/nf-core/gatk4/genomicsdbimport/main'
+include { GATK4_GENOTYPEGVCFS             } from '../modules/nf-core/gatk4/genotypegvcfs/main'
+// step: gatk GatherVCFs
+include { 
+  GATK4_VARIANTRECALIBRATOR as GATK_VARCALLINDELS      
+          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+include { 
+  GATK4_APPLYVQSR as GATK4_VQSRINDELS
+  } from '../modules/nf-core/gatk4/applyvqsr/main'
+include { 
+  GATK4_VARIANTRECALIBRATOR as GATK_VARCALLSNPS      
+          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+include { 
+  GATK4_APPLYVQSR as GATK4_VQSRSNPS
+  } from '../modules/nf-core/gatk4/applyvqsr/main'
+
 
 
 workflow {
