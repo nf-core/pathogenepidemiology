@@ -1,3 +1,11 @@
+// Merge notes (Bilal)
+
+// - middle ground name format e.g. GATK_VARRECAL_SNPS was chosen
+// - '$ samtools view -L core.bed' can be called from GATK4_MARKDUPLICATES container
+// 
+
+
+
 // (Ranjana version)
 
 // GATK4 short-read variant-calling subworkflow
@@ -5,53 +13,62 @@
 // STATUS: draft scaffold -- wires the full chain (CleanSam -> ... -> ApplyVQSR)
 
 
-include { GATK4_CLEANSAM                            } from '../../modules/nf-core/gatk4/cleansam/main'
-include { PICARD_SORTSAM                            } from '../../modules/nf-core/picard/sortsam/main'
-include { GATK4_MARKDUPLICATES                      } from '../../modules/nf-core/gatk4/markduplicates/main'
-include { PICARD_COLLECTINSERTSIZEMETRICS           } from '../../modules/nf-core/picard/collectinsertsizemetrics/main'
-include { GATK4_HAPLOTYPECALLER                     } from '../../modules/nf-core/gatk4/haplotypecaller/main'
-include { GATK4_GENOMICSDBIMPORT                    } from '../../modules/nf-core/gatk4/genomicsdbimport/main'
-include { GATK4_GENOTYPEGVCFS                       } from '../../modules/nf-core/gatk4/genotypegvcfs/main'
-include { GATK4_VARIANTRECALIBRATOR as VARCAL_INDEL } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
-include { GATK4_APPLYVQSR          as VQSR_INDEL    } from '../../modules/nf-core/gatk4/applyvqsr/main'
-include { GATK4_VARIANTRECALIBRATOR as VARCAL_SNP   } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
-include { GATK4_APPLYVQSR          as VQSR_SNP      } from '../../modules/nf-core/gatk4/applyvqsr/main'
+// step:gatk SamFormatConverter -- no need, we already have bams
+include { GATK4_CLEANSAM                  } from '../modules/nf-core/gatk4/cleansam/main'
+include { PICARD_SORTSAM                  } from '../modules/nf-core/picard/sortsam/main'
+include { GATK4_CREATESEQUENCEDICTIONARY  } from '../modules/nf-core/gatk4/createsequencedictionary/main'
+include { GATK4_MARKDUPLICATES_LOCAL      } from '../modules/local/gatk4/markduplicates_local/main'
+// step: gatk DepthOfCoverage
+include { PICARD_COLLECTINSERTSIZEMETRICS } from '../modules/nf-core/picard/collectinsertsizemetrics/main'
+include { GATK4_HAPLOTYPECALLER           } from '../modules/nf-core/gatk4/haplotypecaller/main'
+include { GATK4_GENOMICSDBIMPORT          } from '../modules/nf-core/gatk4/genomicsdbimport/main'
+include { GATK4_GENOTYPEGVCFS             } from '../modules/nf-core/gatk4/genotypegvcfs/main'
+// step: gatk GatherVCFs
+include { 
+  GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_INDELS      
+          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+include { 
+  GATK4_APPLYVQSR as GATK4_VQSR_INDELS
+  } from '../modules/nf-core/gatk4/applyvqsr/main'
+include { 
+  GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_SNPS      
+          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+include { 
+  GATK4_APPLYVQSR as GATK4_VQSR_SNPS
+  } from '../modules/nf-core/gatk4/applyvqsr/main'
 
-// NOTE: sequence-dictionary module exists does not exist yet, but
-// HaplotypeCaller / GenotypeGVCFs / VariantRecalibrator / ApplyVQSR all
-// require a .dict file. Needs:
-//   nf-core modules install gatk4/createsequencedictionary
-// and a call added to prepare_references.nf so it can be emitted alongside
-// queryfasta/queryfai. Left as a plain include here so the gap is visible;
-// swap this in once installed.
 
-// include { GATK4_CREATESEQUENCEDICTIONARY } from '../../modules/nf-core/gatk4/createsequencedictionary/main'
 
 workflow GATK_MOI {
 
     take:
     ch_aligned_s          // channel: [ meta, bam ]         sorted short-read BAM from BWAMEM3_MEM (sort=true)
-    ch_fasta              // channel: [ meta, fasta ]       from PREPARE_REFERENCES.out.queryfasta
-    ch_fai                // channel: [ meta, fai ]         from PREPARE_REFERENCES.out.queryfai (same meta as ch_fasta)
-    ch_dict               // channel: [ meta, dict ]        NOTE: does not exist upstream yet -- see above
+    ch_queryfasta              // channel: [ meta, fasta ]       from PREPARE_REFERENCES.out.queryfasta
+    ch_queryfai                // channel: [ meta, fai ]         from PREPARE_REFERENCES.out.queryfai (same meta as ch_fasta)
     ch_vqsr_resource      // channel: path(training_vcf)    equivalent of the paper's Strains.vcf.gz
     ch_vqsr_resource_tbi  // channel: path(training_vcf_tbi)
 
     main:
-    ch_versions = Channel.empty()
 
-    // reference channels are single-item (one query genome for the whole run),
-    // so .first() lets Nextflow reuse them across every sample -- same pattern
-    // original_local.nf already uses for ch_queryfasta/ch_reffai elsewhere.
+    // Prepare channels for specific use cases:
+
+    ch_versions = Channel.empty() // accumulates tool versions, which can be emitted as 
+                                  // "versions_gatk4", "versions_gatk" or "versions_picard"
+
+    GATK4_CREATESEQUENCEDICTIONARY(ch_fasta)
+    ch_versions = ch_versions.mix(GATK4_CREATESEQUENCEDICTIONARY.out.versions_gatk4)
+
+    ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
+
+    // Create val versions (metadata-free) of channels for modules that expect bare paths
     ch_fasta_val = ch_fasta.map { meta, fasta -> fasta }.first()
-    ch_fai_val   = ch_fai.map { meta, fai -> fai }.first()
-    ch_dict_val  = ch_dict.map { meta, dict -> dict }.first()
+    ch_fai_val     = ch_fai.map { meta, fai -> fai }.first()
+    ch_dict_val   = ch_dict.map { meta, dict -> dict }.first()
 
-    // ============================================================
-    // STAGE A -- alignment cleanup
-    // paper: SamFormatConverter (skipped, we already have BAMs) -> CleanSam ->
-    //        SortSam -> MarkDuplicates(Spark) -> restrict to core regions
-    // ============================================================
+
+    // Start pipeline proper:
+
+    // QC steps
 
     GATK4_CLEANSAM(
         ch_aligned_s,
@@ -65,23 +82,20 @@ workflow GATK_MOI {
     )
     ch_versions = ch_versions.mix(PICARD_SORTSAM.out.versions_picard)
 
-    GATK4_MARKDUPLICATES(
+    GATK4_MARKDUPLICATES_LOCAL(
         PICARD_SORTSAM.out.bam,
         ch_fasta_val,
         ch_fai_val
     )
-    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES.out.versions_gatk4)
+    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_LOCAL.out.versions_gatk4)
 
-    ch_dedup_bam = GATK4_MARKDUPLICATES.out.bam
+    ch_dedup_bam = GATK4_MARKDUPLICATES_LOCAL.out.bam
 
     // NOTE: paper does one more step here -- `samtools view -L core.bed` to
     // drop reads outside the P. falciparum core genome / any residual human
     // reads. No module for that yet; SAMTOOLS_VIEW with an interval
     // list would slot in right after MarkDuplicates, before HaplotypeCaller.
 
-    // ============================================================
-    // STAGE B -- QC stats (side branch, does not feed variant calling)
-    // ============================================================
 
     PICARD_COLLECTINSERTSIZEMETRICS(ch_dedup_bam)
     ch_versions = ch_versions.mix(PICARD_COLLECTINSERTSIZEMETRICS.out.versions_picard)
@@ -222,28 +236,7 @@ workflow GATK_MOI {
 // GATK4 Steps from Niare et al. workflow: nf-core modules and placeholders
 // (at this point just for record keeping)
 
-// step:gatk SamFormatConverter -- no need, we already have bams
-include { GATK4_CLEANSAM                  } from '../modules/nf-core/gatk4/cleansam/main'
-include { PICARD_SORTSAM                  } from '../modules/nf-core/picard/sortsam/main'
-include { GATK4_MARKDUPLICATES            } from '../modules/nf-core/gatk4/markduplicates/main'
-// step: gatk DepthOfCoverage
-include { PICARD_COLLECTINSERTSIZEMETRICS } from '../modules/nf-core/picard/collectinsertsizemetrics/main'
-include { GATK4_HAPLOTYPECALLER           } from '../modules/nf-core/gatk4/haplotypecaller/main'
-include { GATK4_GENOMICSDBIMPORT          } from '../modules/nf-core/gatk4/genomicsdbimport/main'
-include { GATK4_GENOTYPEGVCFS             } from '../modules/nf-core/gatk4/genotypegvcfs/main'
-// step: gatk GatherVCFs
-include { 
-  GATK4_VARIANTRECALIBRATOR as GATK_VARCALLINDELS      
-          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
-include { 
-  GATK4_APPLYVQSR as GATK4_VQSRINDELS
-  } from '../modules/nf-core/gatk4/applyvqsr/main'
-include { 
-  GATK4_VARIANTRECALIBRATOR as GATK_VARCALLSNPS      
-          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
-include { 
-  GATK4_APPLYVQSR as GATK4_VQSRSNPS
-  } from '../modules/nf-core/gatk4/applyvqsr/main'
+
 
 workflow GATK_MOI {
     take:

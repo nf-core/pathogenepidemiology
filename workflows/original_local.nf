@@ -43,7 +43,7 @@ workflow {
 
   ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
   ch_hostfasta  = PREPARE_REFERENCES.out.hostfasta
-  ch_reffai     = PREPARE_REFERENCES.out.queryfai
+  ch_queryfai     = PREPARE_REFERENCES.out.queryfai
 
 
   // RUN FASTQC ON READS AND USE BBDUK TO REMOVE ADAPTER AND BIO. CONTAMINANT SEQS
@@ -103,7 +103,7 @@ workflow {
         },
     ch_queryfasta.first(),
     //ch_queryfasta.first(),
-    ch_reffai.first()
+    ch_queryfai.first()
   )
 
 
@@ -150,7 +150,7 @@ workflow {
   // samtools stats input
   // takes tuple val(meta2), path(fasta), path(fai)
   
-  statsrefs = ch_queryfasta.join(ch_reffai, by: 0)
+  statsrefs = ch_queryfasta.join(ch_queryfai, by: 0)
                           .map { meta, ref, fai_meta, fai -> tuple(meta, ref, fai) }
                           
   ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs.first())
