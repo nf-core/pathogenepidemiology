@@ -85,6 +85,11 @@
                         "git_sha": "fe08122c3dc2f2d7890daba06f6c90e570ef01de",
                         "installed_by": ["modules"]
                     },
+                    "picard/createsequencedictionary": {
+                        "branch": "master",
+                        "git_sha": "fe08122c3dc2f2d7890daba06f6c90e570ef01de",
+                        "installed_by": ["modules"]
+                    },
                     "picard/sortsam": {
                         "branch": "master",
                         "git_sha": "fe08122c3dc2f2d7890daba06f6c90e570ef01de",
