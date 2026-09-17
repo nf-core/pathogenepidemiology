@@ -73,8 +73,9 @@ workflow GATK_MOI {
     )
     ch_versions = ch_versions.mix(PICARD_SORTSAM.out.versions_picard)
 
-
-    def core_bed = file("${baseDir}/assets/Pf3D7_core.bed")
+    // TODO: change to projectDir or baseDir before pipeline is shipped
+    //       /when it should run from pipelineroot/main.nf
+    def core_bed = file("${launchDir}/assets/Pf3D7_core.bed")
 
     GATK4_MARKDUPLICATES_CUSTOM(
     PICARD_SORTSAM.out.bam,
@@ -111,7 +112,7 @@ workflow GATK_MOI {
     // TODO: DECISION: -L arg, either create interval files and channel for chromosomally 
     //       parallelised analysis, or break from original Niare+al pipeline design. 
     GATK4_HAPLOTYPECALLER(
-    ch_dedup_bam.map { meta, bam -> tuple(meta, bam, file("${bam}.bai"), [], []) },
+    ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam, bai, [], []) },
     ch_queryfasta.first(),
     ch_queryfai.first(),
     ch_querydict.first(),
