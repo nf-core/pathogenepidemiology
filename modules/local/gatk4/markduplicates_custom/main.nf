@@ -1,4 +1,4 @@
-process GATK4_MARKDUPLICATES_LOCAL {
+process GATK4_MARKDUPLICATES_CUSTOM {
     tag "${meta.id}"
     label 'process_low'
 
@@ -11,10 +11,10 @@ process GATK4_MARKDUPLICATES_LOCAL {
     tuple val(meta), path(bam)
     path fasta
     path fasta_fai
-    path core_bed              // NEW
+    path core_bed            
 
     output:
-    tuple val(meta), path("*.pf.bam"),     emit: bam
+    tuple val(meta), path("*.pf.bam"),     emit: bam // *pf* because everything outside core genome is removed
     tuple val(meta), path("*.pf.bam.bai"), emit: bai
     tuple val(meta), path("*.metrics"),    emit: metrics
     tuple val("${task.process}"), val('gatk4'),    eval("gatk --version | sed -n '/GATK.*v/s/.*v//p'"), topic: versions, emit: versions_gatk4

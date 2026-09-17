@@ -51,3 +51,9 @@
 
 - [Singularity](https://pubmed.ncbi.nlm.nih.gov/28494014/)
   > Kurtzer GM, Sochat V, Bauer MW. Singularity: Scientific containers for mobility of compute. PLoS One. 2017 May 11;12(5):e0177459. doi: 10.1371/journal.pone.0177459. PubMed PMID: 28494014.
+
+## Refactored bioinformatics
+
+- [GATK-MOI_forPlasmodium]
+  > Niaré, K., Greenhouse, B. & Bailey, J.A. An optimized GATK4 pipeline for Plasmodium falciparum whole genome sequencing variant calling and analysis. Malar J 22, 207 (2023). DOI: https://doi.org/10.1186/s12936-023-04632-0 Licence: http://creativecommons.org/licenses/by/4.0/
+  > Protocol code: https://github.com/Karaniare/Optimized_GATK4_pipeline

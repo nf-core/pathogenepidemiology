@@ -26,9 +26,13 @@ include { CLAIR3_CUSTOM        } from '../modules/local/clair3_custom/main' // C
 include { CLAIR3               } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
-
+include { 
+  SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 
+  } from '../modules/nf-core/samtools/stats/main'
+include { 
+  SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 
+  } from '../modules/nf-core/samtools/stats/main'
+include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
 
 
 
@@ -128,7 +132,6 @@ workflow {
     ch_samples_s,                                                    
     bwamem3_index.index.first(),
     ch_queryfasta.first(),
-    //ch_queryfasta.first(),
     true                                    // sort the bam for gatk                                                                    
     )
 
@@ -138,7 +141,13 @@ workflow {
     .map { meta, bam, bai -> tuple(meta, bam, bai) }
 
 
-  // TODO: CREATE varcalls_s CHANNEL WITH GATK
+  varcalls_s = GATK_MOI(
+    aligned_s.aligned,
+    ch_queryfasta,
+    ch_queryfai,
+    Channel.empty(),
+    Channel.empty()
+  ).varcalls_s
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS
 
@@ -151,7 +160,7 @@ workflow {
   // takes tuple val(meta2), path(fasta), path(fai)
   
   statsrefs = ch_queryfasta.join(ch_queryfai, by: 0)
-                          .map { meta, ref, fai_meta, fai -> tuple(meta, ref, fai) }
+                          .map { meta, ref, fai -> tuple(meta, ref, fai) }
                           
   ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs.first())
   ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs.first())
@@ -164,7 +173,8 @@ workflow {
         ch_bbduk_logs.collect { meta, files -> files },
         ch_bbduk_dropped.collect { meta, files -> files },
         ch_mm2stats.stats.collect { meta, files -> files },
-        ch_bm3stats.stats.collect { meta, files -> files }
+        ch_bm3stats.stats.collect { meta, files -> files },
+        varcalls_s.collect { meta, files -> files }//,
         // Space for more channels
     )
     .flatten()

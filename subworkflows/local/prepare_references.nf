@@ -24,9 +24,7 @@ workflow PREPARE_REFERENCES {
     
     ch_faidx_in = queryfasta
                     .map { meta, fasta ->
-                        // Create a Path object for the expected .fai file
-                        def fai_path = file(fasta.toString() + ".fai")
-                        return tuple(meta, fasta, fai_path)
+                        return tuple(meta, fasta, [])
     }
     queryfai = SAMTOOLS_FAIDX(ch_faidx_in, false).fai
 

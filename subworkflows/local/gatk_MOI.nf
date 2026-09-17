@@ -1,41 +1,31 @@
-// Merge notes (Bilal)
-
-// - middle ground name format e.g. GATK_VARRECAL_SNPS was chosen
-// - '$ samtools view -L core.bed' can be called from GATK4_MARKDUPLICATES container
-// 
-
-
-
-// (Ranjana version)
-
-// GATK4 short-read variant-calling subworkflow
+// GATK4 short-read variant-calling subworkflow - refactor from Niare et al
 //
 // STATUS: draft scaffold -- wires the full chain (CleanSam -> ... -> ApplyVQSR)
 
 
-// step:gatk SamFormatConverter -- no need, we already have bams
-include { GATK4_CLEANSAM                  } from '../modules/nf-core/gatk4/cleansam/main'
-include { PICARD_SORTSAM                  } from '../modules/nf-core/picard/sortsam/main'
-include { GATK4_CREATESEQUENCEDICTIONARY  } from '../modules/nf-core/gatk4/createsequencedictionary/main'
-include { GATK4_MARKDUPLICATES_LOCAL      } from '../modules/local/gatk4/markduplicates_local/main'
-// step: gatk DepthOfCoverage
-include { PICARD_COLLECTINSERTSIZEMETRICS } from '../modules/nf-core/picard/collectinsertsizemetrics/main'
-include { GATK4_HAPLOTYPECALLER           } from '../modules/nf-core/gatk4/haplotypecaller/main'
-include { GATK4_GENOMICSDBIMPORT          } from '../modules/nf-core/gatk4/genomicsdbimport/main'
-include { GATK4_GENOTYPEGVCFS             } from '../modules/nf-core/gatk4/genotypegvcfs/main'
+//include { SAMTOOLS_INDEX                  } from '../../modules/nf-core/samtools/index/main'
+include { GATK4_CLEANSAM                  } from '../../modules/nf-core/gatk4/cleansam/main'
+include { PICARD_SORTSAM                  } from '../../modules/nf-core/picard/sortsam/main'
+include { GATK4_CREATESEQUENCEDICTIONARY  } from '../../modules/nf-core/gatk4/createsequencedictionary/main'
+include { GATK4_MARKDUPLICATES_CUSTOM      } from '../../modules/local/gatk4/markduplicates_custom/main'
+include { MOSDEPTH                        } from '../../modules/nf-core/mosdepth/main'
+include { PICARD_COLLECTINSERTSIZEMETRICS } from '../../modules/nf-core/picard/collectinsertsizemetrics/main'
+include { GATK4_HAPLOTYPECALLER           } from '../../modules/nf-core/gatk4/haplotypecaller/main'
+include { GATK4_GENOMICSDBIMPORT          } from '../../modules/nf-core/gatk4/genomicsdbimport/main'
+include { GATK4_GENOTYPEGVCFS             } from '../../modules/nf-core/gatk4/genotypegvcfs/main'
 // step: gatk GatherVCFs
 include { 
   GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_INDELS      
-          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+          } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
 include { 
   GATK4_APPLYVQSR as GATK4_VQSR_INDELS
-  } from '../modules/nf-core/gatk4/applyvqsr/main'
+  } from '../../modules/nf-core/gatk4/applyvqsr/main'
 include { 
   GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_SNPS      
-          } from '../modules/nf-core/gatk4/variantrecalibrator/main'
+          } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
 include { 
   GATK4_APPLYVQSR as GATK4_VQSR_SNPS
-  } from '../modules/nf-core/gatk4/applyvqsr/main'
+  } from '../../modules/nf-core/gatk4/applyvqsr/main'
 
 
 
@@ -43,10 +33,11 @@ workflow GATK_MOI {
 
     take:
     ch_aligned_s          // channel: [ meta, bam ]         sorted short-read BAM from BWAMEM3_MEM (sort=true)
-    ch_queryfasta              // channel: [ meta, fasta ]       from PREPARE_REFERENCES.out.queryfasta
-    ch_queryfai                // channel: [ meta, fai ]         from PREPARE_REFERENCES.out.queryfai (same meta as ch_fasta)
+    ch_queryfasta         // channel: [ meta, fasta ]       from PREPARE_REFERENCES.out.queryfasta
+    ch_queryfai           // channel: [ meta, fai ]         from PREPARE_REFERENCES.out.queryfai
     ch_vqsr_resource      // channel: path(training_vcf)    equivalent of the paper's Strains.vcf.gz
     ch_vqsr_resource_tbi  // channel: path(training_vcf_tbi)
+
 
     main:
 
@@ -55,15 +46,15 @@ workflow GATK_MOI {
     ch_versions = Channel.empty() // accumulates tool versions, which can be emitted as 
                                   // "versions_gatk4", "versions_gatk" or "versions_picard"
 
-    GATK4_CREATESEQUENCEDICTIONARY(ch_fasta)
+    GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
     ch_versions = ch_versions.mix(GATK4_CREATESEQUENCEDICTIONARY.out.versions_gatk4)
 
-    ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
+    ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
     // Create val versions (metadata-free) of channels for modules that expect bare paths
-    ch_fasta_val = ch_fasta.map { meta, fasta -> fasta }.first()
-    ch_fai_val     = ch_fai.map { meta, fai -> fai }.first()
-    ch_dict_val   = ch_dict.map { meta, dict -> dict }.first()
+    ch_fasta_val = ch_queryfasta.map { meta, fasta -> fasta }.first()
+    ch_fai_val     = ch_queryfai.map { meta, fai -> fai }.first()
+    ch_dict_val   = ch_querydict.map { meta, dict -> dict }.first()
 
 
     // Start pipeline proper:
@@ -72,7 +63,7 @@ workflow GATK_MOI {
 
     GATK4_CLEANSAM(
         ch_aligned_s,
-        ch_fasta.join(ch_fai, by: 0)   // tuple(meta2, fasta, fasta_index) -- module needs both together
+        ch_queryfasta.join(ch_queryfai, by: 0).first()   // tuple(meta2, fasta, fasta_index) -- module needs both together
     )
     ch_versions = ch_versions.mix(GATK4_CLEANSAM.out.versions_gatk)
 
@@ -82,55 +73,54 @@ workflow GATK_MOI {
     )
     ch_versions = ch_versions.mix(PICARD_SORTSAM.out.versions_picard)
 
-    GATK4_MARKDUPLICATES_LOCAL(
-        PICARD_SORTSAM.out.bam,
-        ch_fasta_val,
-        ch_fai_val
+
+    def core_bed = file("${baseDir}/assets/Pf3D7_core.bed")
+
+    GATK4_MARKDUPLICATES_CUSTOM(
+    PICARD_SORTSAM.out.bam,
+    ch_fasta_val,
+    ch_fai_val,
+    core_bed
     )
-    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_LOCAL.out.versions_gatk4)
+    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_CUSTOM.out.versions_gatk4)
+    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_CUSTOM.out.versions_samtools)
 
-    ch_dedup_bam = GATK4_MARKDUPLICATES_LOCAL.out.bam
-
-    // NOTE: paper does one more step here -- `samtools view -L core.bed` to
-    // drop reads outside the P. falciparum core genome / any residual human
-    // reads. No module for that yet; SAMTOOLS_VIEW with an interval
-    // list would slot in right after MarkDuplicates, before HaplotypeCaller.
+    ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam
+        .join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
 
 
-    PICARD_COLLECTINSERTSIZEMETRICS(ch_dedup_bam)
+    PICARD_COLLECTINSERTSIZEMETRICS(
+      ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam) }
+      )
     ch_versions = ch_versions.mix(PICARD_COLLECTINSERTSIZEMETRICS.out.versions_picard)
 
-    // NOTE: paper's DepthOfCoverage has no nf-core module. Either have to write it up or see what to do about it. 
+    // NOTE: paper's DepthOfCoverage has no nf-core module. Using mosdepth instead.
 
-    // ============================================================
-    // STAGE C -- per-sample variant calling (gVCF mode)
-    // paper: HaplotypeCaller -ERC GVCF -ploidy 6 (+ several tuned args)
-    // ============================================================
+    ch_mosdepth_input = ch_dedup_bam
+    .map { meta, bam, bai -> tuple(meta, bam, bai, core_bed) }
 
-    // TODO: -ploidy 6 and the paper's other HaplotypeCaller flags
-    // (--kmer-size, --heterozygosity, --min-dangling-branch-length, etc.)
-    // are NOT set here -- (they belong in conf/modules.config as ext.args
-    // for 'GATK4_HAPLOTYPECALLER', not hardcoded in this file.)- can be taken as a suggestion
-    // 
-    // Example:
-    //
-    //   withName: 'GATK4_HAPLOTYPECALLER' {
-    //       ext.args = '-ERC GVCF -ploidy 6 --kmer-size 10 --kmer-size 25 ...'
-    //   }
+    MOSDEPTH(
+        ch_mosdepth_input,   // [meta, bam, bai, bed]
+        ch_queryfasta.first(),            // [meta2, fasta]
+        []                   // quantize_labels — empty means no quantization
+    )
+    ch_versions = ch_versions.mix(MOSDEPTH.out.versions_mosdepth)
+    ch_versions = ch_versions.mix(MOSDEPTH.out.versions_gzip)
 
+
+    // TODO: DECISION: -L arg, either create interval files and channel for chromosomally 
+    //       parallelised analysis, or break from original Niare+al pipeline design. 
     GATK4_HAPLOTYPECALLER(
-        ch_dedup_bam.map { meta, bam ->
-            def bai = file("${bam}.bai")   // TODO: confirm MarkDuplicates actually emits/names the .bai this way
-            tuple(meta, bam, bai, [], [])  // no intervals / dragstr model for now
-        },
-        ch_fasta,
-        ch_fai,
-        ch_dict,
-        [ [:], [] ],   // no dbsnp
-        [ [:], [] ]    // no dbsnp index
+    ch_dedup_bam.map { meta, bam -> tuple(meta, bam, file("${bam}.bai"), [], []) },
+    ch_queryfasta.first(),
+    ch_queryfai.first(),
+    ch_querydict.first(),
+    [ [:], [] ],
+    [ [:], [] ]
     )
     ch_versions = ch_versions.mix(GATK4_HAPLOTYPECALLER.out.versions_gatk4)
 
+/*
     // ============================================================
     // STAGE D -- joint genotyping across samples
     // paper: GenomicsDBImport (per chromosome) -> GenotypeGVCFs (per
@@ -158,9 +148,9 @@ workflow GATK_MOI {
 
     GATK4_GENOTYPEGVCFS(
         GATK4_GENOMICSDBIMPORT.out.genomicsdb.map { meta, db -> tuple(meta, db, [], [], []) },
-        ch_fasta,
-        ch_fai,
-        ch_dict,
+        ch_queryfasta.first(),
+        ch_queryfai.first(),
+        ch_querydict.first(),
         [ [:], [] ],
         [ [:], [] ]
     )
@@ -224,34 +214,12 @@ workflow GATK_MOI {
     )
 
     varcalls_s = VQSR_SNP.out.vcf.join(VQSR_SNP.out.tbi, by: 0)
-
+*/
     emit:
-    varcalls_s                                                    // channel: [ meta, vcf, tbi ] -- final recalibrated short-read VCF
+    //varcalls_s                                                    // channel: [ meta, vcf, tbi ] -- final recalibrated short-read VCF
+    varcalls_s = GATK4_HAPLOTYPECALLER.out.vcf
     insert_size_metrics = PICARD_COLLECTINSERTSIZEMETRICS.out.metrics
     versions             = ch_versions
+    mosdepth_summary = MOSDEPTH.out.summary_txt
+    mosdepth_global  = MOSDEPTH.out.global_txt
 }
-
-// (Bilal version)
-
-// GATK4 Steps from Niare et al. workflow: nf-core modules and placeholders
-// (at this point just for record keeping)
-
-
-
-workflow GATK_MOI {
-    take:
-    ch_aligned_s
-    ch_queryref
-
-    main:
-    ch_bm3clean = GATK4_CLEANSAM(ch_aligned_s, ch_queryref)
-
-
-
-    emit:
-
-
-
-}
-
-workflow { GATK_MOI(params.bwamem3_outdir, params.) }
