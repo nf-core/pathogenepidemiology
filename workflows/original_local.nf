@@ -15,19 +15,23 @@ params.clair3model = params.clair3model ?: "r1041_e82_400bps_${params.ont_qual}_
 // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 
 
-include { PREPARE_REFERENCES } from '../subworkflows/local/prepare_references.nf'
-include { PREPROCESS_READS   } from '../subworkflows/local/preprocess_reads.nf'
-include { MINIMAP2_INDEX     } from '../modules/nf-core/minimap2/index/main'
-include { MINIMAP2_ALIGN     } from '../modules/nf-core/minimap2/align/main' 
-include { MULTIQC            } from '../modules/nf-core/multiqc/main'
-include { CLAIR3_CUSTOM      } from '../modules/local/clair3_custom/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
+include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
+include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf'
+include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
+include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main' 
+include { MULTIQC              } from '../modules/nf-core/multiqc/main'
+include { CLAIR3_CUSTOM        } from '../modules/local/clair3_custom/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 // use the CLAIR3 process when you want to use a locally-stored clair3 model 
    // Usage: tuple(meta, bam, bai, null, user_model, platform)
-include { CLAIR3             } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
-include { BWAMEM3_INDEX      } from '../modules/nf-core/bwamem3/index/main'
-include { BWAMEM3_MEM        } from '../modules/nf-core/bwamem3/mem/main'
+include { CLAIR3               } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
+include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
+include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
+
+
+
+
 
 
 workflow {
