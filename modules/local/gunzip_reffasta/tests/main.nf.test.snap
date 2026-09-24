@@ -1,0 +1,16 @@
+{
+    "sarscov2 - gzipped fasta": {
+        "content": [
+            {
+                "0": [
+                    "genome.fasta:md5,6e9fe4042a72f2345f644f239272b7e6"
+                ]
+            }
+        ],
+        "timestamp": "2026-09-21T09:45:38.850053011",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
+        }
+    }
+}
