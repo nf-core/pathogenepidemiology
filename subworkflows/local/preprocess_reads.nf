@@ -20,7 +20,9 @@ workflow PREPROCESS_READS {
             def meta = [
                 id: row.run_accession,
                 single_end: row.fastq_2 == '',
-                instrument_platform: row.instrument_platform
+                library_strategy: row.library_strategy,
+                instrument_platform: row.instrument_platform,
+                study_accession: row.study_accession
                 ]
             def reads = row.fastq_2 ? [file(row.fastq_1), file(row.fastq_2)] : [file(row.fastq_1)]
             tuple(meta, reads, row.instrument_platform)

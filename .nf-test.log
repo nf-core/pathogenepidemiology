@@ -1,0 +1,16 @@
+Sept-24 09:53:44.145 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
+Sept-24 09:53:44.158 [main] INFO  com.askimed.nf.test.App - Arguments: [test, modules/local/gunzip_reffasta/tests/main.nf.test, --profile, docker]
+Sept-24 09:53:45.037 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 26.04.6
+Sept-24 09:53:45.039 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nf-test.config...
+Sept-24 09:53:45.718 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 70 files from directory /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology in 0.181 sec
+Sept-24 09:53:45.720 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+Sept-24 09:53:45.720 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/modules/local/gunzip_reffasta/tests/main.nf.test]
+Sept-24 09:53:45.818 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 1 tests to execute.
+Sept-24 09:53:45.818 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+Sept-24 09:53:45.818 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test Process GUNZIP_REFFASTA' from file '/home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/modules/local/gunzip_reffasta/tests/main.nf.test'.
+Sept-24 09:53:45.818 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '7c7f921e: sarscov2 - gzipped fasta'. type: com.askimed.nf.test.lang.process.ProcessTest
+Sept-24 09:53:50.960 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/modules/local/gunzip_reffasta/tests/main.nf.test.snap'
+Sept-24 09:53:50.968 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'sarscov2 - gzipped fasta' match.
+Sept-24 09:53:50.968 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '7c7f921e: sarscov2 - gzipped fasta' finished. status: PASSED
+Sept-24 09:53:50.970 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Test Process GUNZIP_REFFASTA' finished. snapshot file: true, skipped tests: false, failed tests: false
+Sept-24 09:53:50.970 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 1 tests. 0 tests failed. Done!

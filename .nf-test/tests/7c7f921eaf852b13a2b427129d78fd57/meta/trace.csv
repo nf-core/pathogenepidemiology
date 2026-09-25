@@ -1,0 +1,2 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	ad/1a820f	20491	GUNZIP_REFFASTA	COMPLETED	0	2026-09-24 09:53:49.733	80ms	8ms	111.6%	0	0	92.9 KB	29.8 KB
