@@ -37,7 +37,7 @@ include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
 
 
 
-/*
+
 workflow {
   // DOWNLOAD AND INDEX REFERENCE FASTA FILES
   PREPARE_REFERENCES(
@@ -149,6 +149,7 @@ workflow {
     ch_wgs_bam_s,
     ch_queryfasta,
     ch_queryfai,
+    // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
     Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),   
     Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")  
   ).varcalls_s
@@ -190,100 +191,4 @@ workflow {
   MULTIQC(ch_multiqc_input)
 
 
-}
-*/
-
-workflow {
-
-    PREPARE_REFERENCES(params.queryurl, params.hosturl)
-    ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
-    ch_hostfasta  = PREPARE_REFERENCES.out.hostfasta
-    ch_queryfai   = PREPARE_REFERENCES.out.queryfai
-
-    PREPROCESS_READS(params.samplesheet, ch_hostfasta, params.adapters)
-    ch_reads_clean    = PREPROCESS_READS.out.reads_clean
-    ch_bbduk_stats    = PREPROCESS_READS.out.bbduk_stats
-    ch_bbduk_logs     = PREPROCESS_READS.out.bbduk_logs
-    ch_bbduk_dropped  = PREPROCESS_READS.out.bbduk_dropped
-    ch_samples        = PREPROCESS_READS.out.samples
-    ch_fastqc_out     = PREPROCESS_READS.out.fastqc
-
-    // LONG-READ TRACK
-    ch_samples_l = ch_reads_clean
-      .join(ch_samples.map { meta, reads, platform -> tuple(meta, platform) }, by: 0)
-      .filter { meta, reads, platform -> platform == 'OXFORD_NANOPORE' }
-      .map { meta, reads, platform -> tuple(meta, reads) }
-
-    minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
-    aligned_l = MINIMAP2_ALIGN(
-      ch_samples_l,
-      minimap2_index.index.first(),
-      true, 'bai', false, false
-    )
-
-    ch_mm2stats_input = aligned_l.bam
-      .join(aligned_l.index, by: 0)
-      .map { meta, bam, bai -> tuple(meta, bam, bai) }
-
-    varcalls_l = CLAIR3_CUSTOM(
-      aligned_l.bam.map { meta, bam ->
-        def bai = file("${bam}.bai")
-        return tuple(meta, bam, bai, params.clair3model, null, "ont")
-      },
-      ch_queryfasta.first(),
-      ch_queryfai.first()
-    )
-
-    // SHORT-READ TRACK
-    ch_samples_s = ch_reads_clean
-      .join(ch_samples.map { meta, reads, platform -> tuple(meta, platform) }, by: 0)
-      .filter { meta, reads, platform -> (platform == 'ILLUMINA' || platform == 'DNBSEQ') }
-      .map { meta, reads, platform -> tuple(meta, reads) }
-
-    bwamem3_index = BWAMEM3_INDEX(ch_queryfasta)
-    aligned_s = BWAMEM3_MEM(
-      ch_samples_s,
-      bwamem3_index.index.first(),
-      ch_queryfasta.first(),
-      true
-    )
-
-    ch_bm3stats_input = aligned_s.aligned
-      .join(aligned_s.index, by: 0)
-      .map { meta, bam, bai -> tuple(meta, bam, bai) }
-
-    ch_wgs_bam_s      = aligned_s.aligned.filter { meta, bam -> meta.library_strategy == 'WGS' }
-    ch_amplicon_bam_s = aligned_s.aligned.filter { meta, bam -> meta.library_strategy != 'WGS' }
-
-    varcalls_s = GATK_MOI(
-      ch_wgs_bam_s,
-      ch_queryfasta,
-      ch_queryfai,
-      Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),
-      Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
-    ).varcalls_s
-
-    // POST-PROCESSING
-    statsrefs = ch_queryfasta.join(ch_queryfai, by: 0)
-      .map { meta, ref, fai -> tuple(meta, ref, fai) }
-
-    ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs.first())
-    ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs.first())
-
-    ch_multiqc_input = Channel.empty()
-      .mix(
-        ch_fastqc_out.collect { meta, files -> files },
-        ch_bbduk_stats.collect { meta, files -> files },
-        ch_bbduk_logs.collect { meta, files -> files },
-        ch_bbduk_dropped.collect { meta, files -> files },
-        ch_mm2stats.stats.collect { meta, files -> files },
-        ch_bm3stats.stats.collect { meta, files -> files },
-        varcalls_s.collect { meta, files, idx -> files }
-      )
-      .flatten()
-      .collect()
-      .map { files -> tuple([:], files, [], [], [], []) }
-
-    MULTIQC(ch_multiqc_input)
-  
 }

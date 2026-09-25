@@ -59,6 +59,7 @@ workflow GATK_MOI {
     PICARD_SORTSAM(GATK4_CLEANSAM.out.bam, 'coordinate')
     ch_versions = ch_versions.mix(PICARD_SORTSAM.out.versions_picard)
 
+    // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
     def core_bed = file("${launchDir}/assets/Pf3D7_core.bed")
 
     GATK4_MARKDUPLICATES_CUSTOM(
@@ -89,6 +90,7 @@ workflow GATK_MOI {
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions_mosdepth)
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions_gzip)
 
+    // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
     ch_intervals = Channel.fromPath("${launchDir}/assets/intervals/core_chr*.list")
         .map { list ->
             def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr')
@@ -118,6 +120,7 @@ workflow GATK_MOI {
         .groupTuple(by: 0)
         .map { chr_meta, vcfs, tbis ->
             def chr_num  = chr_meta.chr.replace('chr', '')
+            // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
             def interval = file("${launchDir}/assets/intervals/core_chr${chr_num}.list")
             tuple(
                 [id: chr_meta.chr],
