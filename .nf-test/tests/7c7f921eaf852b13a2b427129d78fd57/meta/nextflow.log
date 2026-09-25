@@ -1,0 +1,96 @@
+Sept-24 09:53:46.932 [main] DEBUG nextflow.cli.Launcher - $> nextflow -quiet -log /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/meta/nextflow.log run /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test-7c7f921eaf852b13a2b427129d78fd57.nf -c /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nextflow.config -c /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/tests/nextflow.config -params-file /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/meta/params.json -ansi-log false -profile docker -with-trace /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/meta/trace.csv -w /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/work
+Sept-24 09:53:46.992 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 26.04.6
+Sept-24 09:53:47.015 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/thrillal/.nextflow/plugins; core-plugins: nf-amazon@3.9.2,nf-azure@1.22.6,nf-cloudcache@0.6.0,nf-codecommit@0.5.3,nf-console@1.3.0,nf-google@1.27.3,nf-k8s@1.5.4,nf-seqera@0.21.1,nf-tower@1.28.2,nf-wave@1.21.0
+Sept-24 09:53:47.035 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Sept-24 09:53:47.036 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Sept-24 09:53:47.039 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.14.1 in 'deployment' mode
+Sept-24 09:53:47.054 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+Sept-24 09:53:47.182 [main] DEBUG nextflow.plugin.PluginUpdater - Using plugin repository: HttpPluginRepository [registry]; url=https://registry.nextflow.io/api
+Sept-24 09:53:47.186 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Sept-24 09:53:47.223 [main] DEBUG nextflow.config.ConfigBuilder - Found config home: /home/thrillal/.nextflow/config
+Sept-24 09:53:47.225 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nextflow.config
+Sept-24 09:53:47.229 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nextflow.config
+Sept-24 09:53:47.230 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/tests/nextflow.config
+Sept-24 09:53:47.231 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/thrillal/.nextflow/config
+Sept-24 09:53:47.231 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nextflow.config
+Sept-24 09:53:47.231 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/nextflow.config
+Sept-24 09:53:47.231 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/tests/nextflow.config
+Sept-24 09:53:47.234 [main] DEBUG nextflow.config.ConfigParserFactory - Using config parser v2
+Sept-24 09:53:47.250 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `docker`
+Sept-24 09:53:47.584 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `docker`
+Sept-24 09:53:48.388 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `docker`
+Sept-24 09:53:48.638 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `docker`
+Sept-24 09:53:48.645 [main] DEBUG nextflow.config.ConfigBuilder - Available config profiles: [docker, debug, conda, mamba, arm64, emulate_amd64, singularity, podman, shifter, charliecloud, apptainer, wave, gpu, test, test_full, abims, adcra, alice, alliance_canada, apollo, arcc, aws_tower, awsbatch, azurebatch, bi, bigpurple, bih, binac2, biohpc_gen, biowulf, bluebear, cambridge, cannon, cbe, ccga_dx, ccga_cau, ceci_dragon2, ceci_nic5, cedars, ceres, cfc, cfc_dev, cheaha, computerome, create, crg, crick, cropdiversityhpc, crukmi, csiro_petrichor, czbiohub_aws, daisybio, denbi_qbic, dkfz, dirac, ebc, eddie, ebi_codon, ebi_codon_slurm, einstein, embl_hd, engaging, ethz_euler, eva, eva_grace, fgcz, fred_hutch, fsu_draco, fub_curta, genotoul, genouest, giga, gis, googlebatch, hasta, hazel, hki_genie, hypatia, humantechnopole, icr_alma, ifb_core, imb, imperial, incliva, ipop_up, iris, janelia, jax, jex, unsw_katana, ku_sund_danhead, kaust, kelvin2, ki_luria, leicester, lovelace, lrz_cm4, lugh, m3c, maestro, mahuika, mana, marjorie, marvin, mccleary, mcw_rcc, medair, mjolnir_globe, mpcdf, mpcdf_viper, mssm, munin, naiss, nci_gadi, nu_genomics, nygc, nyu_hpc, oist, palmetto, pasteur, pawsey_setonix, pdc_kth, phoenix, psmn, purdue_bell, purdue_gautschi, purdue_negishi, qmul_apocrita, rki, rosalind, rosalind_uge, roslin, saga_sigma2, sage, sahmri, sanger, ilifu, seadragon, seattlechildrens, seawulf, seg_globe, self_hosted_runner, shu_bmrc, stjude, tes, tigem, tubingen_apg, tufts, tuos_stanage, ucd_sonic, ucl_cscluster, ucl_myriad, uct_hpc, uge, unc_lccc, unc_longleaf, unibe_ibu, unity, uod_hpc, uppmax, utd_juno, uw_hyak_pedslabs, uzh, uzl_omics, vai, verily_workbench, vsc_calcua, vsc_kul_uhasselt, vsc_ugent, wehi, xanadu, york_viking, cpu]
+Sept-24 09:53:48.690 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins declared=[nf-schema@2.5.1]
+Sept-24 09:53:48.691 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Sept-24 09:53:48.691 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[nf-schema@2.5.1]
+Sept-24 09:53:48.693 [main] DEBUG nextflow.plugin.PluginUpdater - Installing plugin nf-schema version: 2.5.1
+Sept-24 09:53:48.699 [main] INFO  org.pf4j.AbstractPluginManager - Plugin 'nf-schema@2.5.1' resolved
+Sept-24 09:53:48.699 [main] INFO  org.pf4j.AbstractPluginManager - Start plugin 'nf-schema@2.5.1'
+Sept-24 09:53:48.703 [main] DEBUG nextflow.plugin.BasePlugin - Plugin started nf-schema@2.5.1
+Sept-24 09:53:48.709 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/thrillal/.nextflow/secrets/store.json
+Sept-24 09:53:48.711 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@28e7bb31] - activable => nextflow.secret.LocalSecretsProvider@28e7bb31
+Sept-24 09:53:48.723 [main] INFO  nextflow.cli.CmdRun - Launching `/home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test-7c7f921eaf852b13a2b427129d78fd57.nf` [intergalactic_visvesvaraya] - revision: c1b768827a
+Sept-24 09:53:48.724 [main] ERROR org.pf4j.AbstractExtensionFinder - Different class loaders: 'org.pf4j.PluginClassLoader@57c69937' (E) and 'jdk.internal.loader.ClassLoaders$AppClassLoader@5bc2b487' (EP)
+Sept-24 09:53:48.747 [main] WARN  nextflow.config.ConfigValidator - Unrecognized config option 'manifest.diagram'
+Sept-24 09:53:48.748 [main] WARN  nextflow.config.ConfigValidator - Unrecognized config option 'validation.defaultIgnoreParams'
+Sept-24 09:53:48.748 [main] WARN  nextflow.config.ConfigValidator - Unrecognized config option 'validation.monochromeLogs'
+Sept-24 09:53:48.788 [main] DEBUG nextflow.Session - Session UUID: dfc0dd81-705e-4253-8172-a273c45d485a
+Sept-24 09:53:48.788 [main] DEBUG nextflow.Session - Run name: intergalactic_visvesvaraya
+Sept-24 09:53:48.788 [main] DEBUG nextflow.Session - Executor pool size: 24
+Sept-24 09:53:48.795 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+Sept-24 09:53:48.799 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=72; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Sept-24 09:53:48.815 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 26.04.6 build 12646
+  Created: 09-07-2026 18:49 UTC (20:49 CEST)
+  System: Linux 7.1.5-76070105-generic
+  Runtime: Groovy 4.0.31 on OpenJDK 64-Bit Server VM 25.0.2+10-LTS
+  Encoding: UTF-8 (UTF-8)
+  Process: 20367@pop-os [192.168.178.80]
+  CPUs: 24 - Mem: 62.1 GB (28.7 GB) - Swap: 20 GB (20 GB)
+Sept-24 09:53:48.830 [main] DEBUG nextflow.Session - Work-dir: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/work [ext2/ext3]
+Sept-24 09:53:48.831 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/bin
+Sept-24 09:53:48.838 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Sept-24 09:53:48.846 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+Sept-24 09:53:48.848 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+Sept-24 09:53:48.873 [main] DEBUG nextflow.Session - Observer factory (v2): ValidationObserverFactory
+Sept-24 09:53:48.904 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Sept-24 09:53:48.912 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 25; maxThreads: 1000
+Sept-24 09:53:48.971 [main] DEBUG nextflow.Session - Session start
+Sept-24 09:53:48.978 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow started -- trace file: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/meta/trace.csv
+Sept-24 09:53:48.980 [main] DEBUG nextflow.script.ScriptLoaderFactory - Using script parser v2
+Sept-24 09:53:49.216 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Sept-24 09:53:49.346 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+Sept-24 09:53:49.347 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Sept-24 09:53:49.353 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Sept-24 09:53:49.358 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=24; memory=62.1 GB; capacity=24; pollInterval=100ms; dumpInterval=5m
+Sept-24 09:53:49.360 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Sept-24 09:53:49.391 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'GUNZIP_REFFASTA': maxForks=0; fair=false; array=0
+Sept-24 09:53:49.448 [main] DEBUG nextflow.Session - Config process names validation disabled as requested
+Sept-24 09:53:49.450 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+Sept-24 09:53:49.450 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > GUNZIP_REFFASTA
+Sept-24 09:53:49.451 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Main: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test-7c7f921eaf852b13a2b427129d78fd57.nf
+  _nf_script_5715ad64600473af: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/modules/local/gunzip_reffasta/main.nf
+Sept-24 09:53:49.451 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Sept-24 09:53:49.451 [main] DEBUG nextflow.Session - Session await
+Sept-24 09:53:49.544 [FileTransfer-1] DEBUG nextflow.file.FilePorter - Copying foreign file https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta.gz to work dir: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/work/stage-dfc0dd81-705e-4253-8172-a273c45d485a/d5/110e5f9f17d9723b1329d4cfe51c16/genome.fasta.gz
+Sept-24 09:53:49.732 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Sept-24 09:53:49.734 [Task submitter] INFO  nextflow.Session - [ad/1a820f] Submitted process > GUNZIP_REFFASTA
+Sept-24 09:53:49.816 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: GUNZIP_REFFASTA; status: COMPLETED; exit: 0; error: -; workDir: /home/thrillal/BilalsGituation/NF/pathogenepidemiology/nf-core-pathogenepidemiology/.nf-test/tests/7c7f921eaf852b13a2b427129d78fd57/work/ad/1a820f584962b756088c9dd008da69]
+Sept-24 09:53:49.817 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=72; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Sept-24 09:53:49.849 [TaskFinalizer-1] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'PublishDir' minSize=10; maxSize=72; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Sept-24 09:53:49.854 [main] DEBUG nextflow.Session - Session await > all processes finished
+Sept-24 09:53:49.913 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+Sept-24 09:53:49.914 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Sept-24 09:53:49.917 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'TaskFinalizer' shutdown completed (hard=false)
+Sept-24 09:53:49.917 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'PublishDir' shutdown completed (hard=false)
+Sept-24 09:53:49.930 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=1; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=8ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=1; peakMemory=6 GB; ]
+Sept-24 09:53:49.943 [main] DEBUG nextflow.trace.ReportObserver - Workflow completed -- rendering execution report
+Sept-24 09:53:50.493 [main] DEBUG nextflow.trace.TimelineObserver - Workflow completed -- rendering execution timeline
+Sept-24 09:53:50.568 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow completed -- saving trace file
+Sept-24 09:53:50.574 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Sept-24 09:53:50.581 [main] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-schema@2.5.1'
+Sept-24 09:53:50.581 [main] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-schema
+Sept-24 09:53:50.582 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+Sept-24 09:53:50.582 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

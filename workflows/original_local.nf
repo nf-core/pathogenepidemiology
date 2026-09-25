@@ -120,7 +120,7 @@ workflow {
   ch_samples_s = ch_reads_clean
     .join(ch_samples.map { meta, reads, platform -> tuple(meta, platform) }, by: 0)
     .filter { meta, reads, platform ->
-        platform == 'ILLUMINA'
+        (platform == 'ILLUMINA' || platform == 'DNBSEQ')
     }
     .map { meta, reads, platform ->
         tuple(meta, reads)
@@ -141,15 +141,19 @@ workflow {
     .map { meta, bam, bai -> tuple(meta, bam, bai) }
 
 
+  ch_wgs_bam_s     = aligned_s.aligned.filter { meta, bam -> meta.library_strategy == 'WGS' }
+  // Amplicon BAMs — reserved for the bcftools-based caller (not yet wired)
+  ch_amplicon_bam_s = aligned_s.aligned.filter { meta, bam -> meta.library_strategy != 'WGS' }
+
   varcalls_s = GATK_MOI(
-    aligned_s.aligned,
+    ch_wgs_bam_s,
     ch_queryfasta,
     ch_queryfai,
-    Channel.empty(),
-    Channel.empty()
+    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),   
+    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")  
   ).varcalls_s
 
-  // TODO: MERGE varcalls_l AND varcalls_s CHANNELS
+  // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
 
 
 
@@ -174,7 +178,7 @@ workflow {
         ch_bbduk_dropped.collect { meta, files -> files },
         ch_mm2stats.stats.collect { meta, files -> files },
         ch_bm3stats.stats.collect { meta, files -> files },
-        varcalls_s.collect { meta, files -> files }//,
+        varcalls_s.collect { meta, files, idx -> files }//,
         // Space for more channels
     )
     .flatten()

@@ -13,15 +13,16 @@ include { PICARD_COLLECTINSERTSIZEMETRICS } from '../../modules/nf-core/picard/c
 include { GATK4_HAPLOTYPECALLER           } from '../../modules/nf-core/gatk4/haplotypecaller/main'
 include { GATK4_GENOMICSDBIMPORT          } from '../../modules/nf-core/gatk4/genomicsdbimport/main'
 include { GATK4_GENOTYPEGVCFS             } from '../../modules/nf-core/gatk4/genotypegvcfs/main'
-// step: gatk GatherVCFs
+// step: gatk GatherVCFs has no module. bcftools concat serves same purpose
+include { BCFTOOLS_CONCAT } from '../../modules/nf-core/bcftools/concat/main'
 include { 
-  GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_INDELS      
+  GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_INDELS      
           } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
 include { 
   GATK4_APPLYVQSR as GATK4_VQSR_INDELS
   } from '../../modules/nf-core/gatk4/applyvqsr/main'
 include { 
-  GATK4_VARIANTRECALIBRATOR as GATK_VARRECAL_SNPS      
+  GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_SNPS      
           } from '../../modules/nf-core/gatk4/variantrecalibrator/main'
 include { 
   GATK4_APPLYVQSR as GATK4_VQSR_SNPS
@@ -56,6 +57,13 @@ workflow GATK_MOI {
     ch_fai_val     = ch_queryfai.map { meta, fai -> fai }.first()
     ch_dict_val   = ch_querydict.map { meta, dict -> dict }.first()
 
+    // channel for Pf chromosomal intervals
+    // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
+    ch_intervals = Channel.fromPath("${launchDir}/assets/intervals/core_chr*.list") 
+        .map { list ->
+            def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr') // e.g., "core_chr01" -> "chr1"
+            tuple([id: chr_id], list)
+        }
 
     // Start pipeline proper:
 
@@ -108,11 +116,16 @@ workflow GATK_MOI {
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions_mosdepth)
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions_gzip)
 
+    ch_hc_input = ch_dedup_bam
+        .combine(ch_intervals)
+        .map { meta, bam, bai, interval_meta, interval_file ->
+            def combined_meta = meta + [chr: interval_meta.id]
+            tuple(combined_meta, bam, bai, interval_file, [])
+        }
 
-    // TODO: DECISION: -L arg, either create interval files and channel for chromosomally 
-    //       parallelised analysis, or break from original Niare+al pipeline design. 
+
     GATK4_HAPLOTYPECALLER(
-    ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam, bai, [], []) },
+    ch_hc_input,
     ch_queryfasta.first(),
     ch_queryfai.first(),
     ch_querydict.first(),
@@ -121,29 +134,30 @@ workflow GATK_MOI {
     )
     ch_versions = ch_versions.mix(GATK4_HAPLOTYPECALLER.out.versions_gatk4)
 
-/*
-    // ============================================================
-    // STAGE D -- joint genotyping across samples
-    // paper: GenomicsDBImport (per chromosome) -> GenotypeGVCFs (per
-    //        genomic sub-region, run as parallel SLURM jobs) -> GatherVcfs
-    // ============================================================
 
-    // TODO real gap: GenomicsDBImport combines gVCFs from ALL samples into
-    // one database per interval. The single-sample tuple below is only a
-    // placeholder to keep the workflow syntactically chainable -- the real
-    // version needs ch_gvcfs grouped/collected across the whole sample set,
-    // keyed by chromosome/interval (this is the Nextflow equivalent of the
-    // paper's per-chromosome `for i in 1..14` loop -- an interval channel,
-    // not a bash loop). Need to design the interval channel first.
-    ch_gvcfs_for_import = GATK4_HAPLOTYPECALLER.out.vcf
-        .join(GATK4_HAPLOTYPECALLER.out.tbi, by: 0)
-        .map { meta, vcf, tbi -> tuple(meta, vcf, tbi, [], [], []) }
+    // Regroup gVCFs so each item holds all samples for one chromosome
+    ch_gdbi_input = GATK4_HAPLOTYPECALLER.out.vcf
+    .join(GATK4_HAPLOTYPECALLER.out.tbi, by: 0)
+    .map { meta, vcf, tbi -> tuple([chr: meta.chr], vcf, tbi) }
+    .groupTuple(by: 0)
+    .map { chr_meta, vcfs, tbis ->
+        def chr_num  = chr_meta.chr.replace('chr', '')
+        def interval = file("${launchDir}/assets/intervals/core_chr${chr_num}.list")
+        tuple(
+            [id: chr_meta.chr],   // ← meta needs an id, not just chr
+            vcfs,                 // ← list, which module iterates over. produces one --variant flag per file.
+            tbis,
+            interval,             // ← real .list file, not []
+            "",                   // ← interval_value slot, empty
+            []                    // ← wspace slot, empty
+        )
+    }
 
     GATK4_GENOMICSDBIMPORT(
-        ch_gvcfs_for_import,
+        ch_gdbi_input,
         false,  // run_intlist
         false,  // run_updatewspace
-        true    // input_map
+        false    // input_map
     )
     ch_versions = ch_versions.mix(GATK4_GENOMICSDBIMPORT.out.versions_gatk4)
 
@@ -157,70 +171,100 @@ workflow GATK_MOI {
     )
     ch_versions = ch_versions.mix(GATK4_GENOTYPEGVCFS.out.versions_gatk4)
 
-    // NOTE: paper's GatherVcfs (recombine per-region VCFs into one per
-    // chromosome) has no nf-core module. BCFTOOLS_CONCAT does the same job
-    // and does have one -- worth checking before writing a local module.
-
-    // ============================================================
-    // STAGE E -- VQSR filtering: indels first, then SNPs on that output
-    // ============================================================
+    
 
     ch_raw_vcf = GATK4_GENOTYPEGVCFS.out.vcf.join(GATK4_GENOTYPEGVCFS.out.tbi, by: 0)
 
-    // TODO: 'labels' format below is a guess -- confirm against the module's
-    // actual expected resource-label syntax before running. Also,
-    // ch_vqsr_resource(_tbi) needs a real training VCF -- the paper uses a
-    // custom "Strains.vcf.gz"; there isn't an equivalent asset yet
-    // so this needs sourcing/creating before Stage E can actually run.
-    VARCAL_INDEL(
+
+    GATK4_VARRECAL_INDELS(
         ch_raw_vcf,
         ch_vqsr_resource,
         ch_vqsr_resource_tbi,
-        [ 'Brown,known=true,training=true,truth=true,prior=15.0' ],
+        [ '-resource:Strains,known=true,training=true,truth=true,prior=15.0 Strains.2kb.vcf.gz' ],
         ch_fasta_val,
         ch_fai_val,
         ch_dict_val
     )
+    ch_versions = ch_versions.mix(GATK4_VARRECAL_INDELS.out.versions_gatk4)
 
-    VQSR_INDEL(
+    GATK4_VQSR_INDELS(
         ch_raw_vcf
-            .join(VARCAL_INDEL.out.recal, by: 0)
-            .join(VARCAL_INDEL.out.idx, by: 0)
-            .join(VARCAL_INDEL.out.tranches, by: 0),
+            .join(GATK4_VARRECAL_INDELS.out.recal, by: 0)
+            .join(GATK4_VARRECAL_INDELS.out.idx, by: 0)
+            .join(GATK4_VARRECAL_INDELS.out.tranches, by: 0),
         ch_fasta_val,
         ch_fai_val,
         ch_dict_val
     )
+    ch_versions = ch_versions.mix(GATK4_VQSR_INDELS.out.versions_gatk4)
 
-    ch_indelrecal_vcf = VQSR_INDEL.out.vcf.join(VQSR_INDEL.out.tbi, by: 0)
+    ch_indelrecal_vcf = GATK4_VQSR_INDELS.out.vcf.join(GATK4_VQSR_INDELS.out.tbi, by: 0)
 
-    VARCAL_SNP(
+    GATK4_VARRECAL_SNPS(
         ch_indelrecal_vcf,
         ch_vqsr_resource,
         ch_vqsr_resource_tbi,
-        [ 'Brown,known=true,training=true,truth=true,prior=15.0' ],
+        [ '-resource:Strains,known=true,training=true,truth=true,prior=15.0 Strains.2kb.vcf.gz' ],
         ch_fasta_val,
         ch_fai_val,
         ch_dict_val
     )
+    ch_versions = ch_versions.mix(GATK4_VARRECAL_SNPS.out.versions_gatk4)
 
-    VQSR_SNP(
+    GATK4_VQSR_SNPS(
         ch_indelrecal_vcf
-            .join(VARCAL_SNP.out.recal, by: 0)
-            .join(VARCAL_SNP.out.idx, by: 0)
-            .join(VARCAL_SNP.out.tranches, by: 0),
+            .join(GATK4_VARRECAL_SNPS.out.recal, by: 0)
+            .join(GATK4_VARRECAL_SNPS.out.idx, by: 0)
+            .join(GATK4_VARRECAL_SNPS.out.tranches, by: 0),
         ch_fasta_val,
         ch_fai_val,
         ch_dict_val
     )
+    ch_versions = ch_versions.mix(GATK4_VQSR_SNPS.out.versions_gatk4)
 
-    varcalls_s = VQSR_SNP.out.vcf.join(VQSR_SNP.out.tbi, by: 0)
-*/
+    ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf.join(GATK4_VQSR_SNPS.out.tbi, by: 0)
+
+
+    // Concatenate the 14 per-chromosome cohort VCFs into one
+    ch_concat_input = ch_vqsr_output
+        .map { meta, vcf, tbi -> tuple(meta.id, vcf, tbi) }
+        .toSortedList { a, b -> (a[0] - 'chr') as Integer <=> (b[0] - 'chr') as Integer }
+        .map { items ->
+            def vcfs = items.collect { it[1] }
+            def tbis = items.collect { it[2] }
+            tuple([id: 'cohort'], vcfs, tbis)
+        }
+
+    BCFTOOLS_CONCAT(ch_concat_input)
+    ch_versions = ch_versions.mix(BCFTOOLS_CONCAT.out.versions_bcftools)
+
+    varcalls_s = BCFTOOLS_CONCAT.out.vcf.join(BCFTOOLS_CONCAT.out.index, by: 0)
+
     emit:
-    //varcalls_s                                                    // channel: [ meta, vcf, tbi ] -- final recalibrated short-read VCF
-    varcalls_s = GATK4_HAPLOTYPECALLER.out.vcf
+    varcalls_s          = varcalls_s
     insert_size_metrics = PICARD_COLLECTINSERTSIZEMETRICS.out.metrics
-    versions             = ch_versions
-    mosdepth_summary = MOSDEPTH.out.summary_txt
-    mosdepth_global  = MOSDEPTH.out.global_txt
+    versions            = ch_versions
+    mosdepth_summary    = MOSDEPTH.out.summary_txt
+    mosdepth_global     = MOSDEPTH.out.global_txt
 }
+/*
+// for standalone testing while we work on Issue #13
+include { PREPARE_REFERENCES } from './prepare_references'
+
+workflow {
+    ch_aligned_s = Channel.fromPath("${launchDir}/results/aligned_s/*.bam")
+        .map { bam -> tuple([id: bam.baseName], bam) }
+
+    PREPARE_REFERENCES(params.queryurl, params.hosturl)
+
+    gatk_out = GATK_MOI(
+        ch_aligned_s,
+        PREPARE_REFERENCES.out.queryfasta,
+        PREPARE_REFERENCES.out.queryfai,
+        Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),   
+        Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")  
+    )
+
+    gatk_out.varcalls_s.view { meta, vcf -> "gVCF: ${meta.id} -> ${vcf}" }
+}
+*/
