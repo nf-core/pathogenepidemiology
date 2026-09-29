@@ -46,9 +46,12 @@ process BBDUK_CUSTOM {
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def output_command  = meta.single_end ? "echo '' | gzip > ${prefix}.fastq.gz" : "echo '' | gzip > ${prefix}_1.fastq.gz ; echo '' | gzip > ${prefix}_2.fastq.gz"
+    def output_command = meta.single_end ?
+        "echo '' | gzip > ${prefix}_trimmed.fastq.gz ; echo '' | gzip > ${prefix}.discarded.fastq.gz" :
+        "echo '' | gzip > ${prefix}_1_trimmed.fastq.gz ; echo '' | gzip > ${prefix}_2_trimmed.fastq.gz ; echo '' | gzip > ${prefix}_1.discarded.fastq.gz ; echo '' | gzip > ${prefix}_2.discarded.fastq.gz"
     """
     touch ${prefix}.bbduk.log
+    touch ${prefix}.stats.txt
     $output_command
     """
 }
