@@ -25,11 +25,6 @@
                         "git_sha": "cab334f632708de2679161f713dd969bfa491a25",
                         "installed_by": ["modules"]
                     },
-                    "clair3": {
-                        "branch": "master",
-                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
-                        "installed_by": ["modules"]
-                    },
                     "deepvariant/callvariants": {
                         "branch": "master",
                         "git_sha": "4a4ccce52d5a280b0b136ff3ac841607debed92b",
@@ -138,6 +133,11 @@
                     "samtools/stats": {
                         "branch": "master",
                         "git_sha": "9339809fcb90af8a8b7051e6cd914894d5c52002",
+                        "installed_by": ["modules"]
+                    },
+                    "untar": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     }
                 }

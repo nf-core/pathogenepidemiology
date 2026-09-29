@@ -7,12 +7,6 @@ params.threads = 4
 
 // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 
-// change --ont_qual to "hac" allowed
-params.ont_qual = "sup"   
-// allow user to fully or partially override clair3model value on cmd line, in case of older flowcell or "hac" basecalling
-params.clair3model = params.clair3model ?: "r1041_e82_400bps_${params.ont_qual}_v520_with_mv"
-
-// CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 
 
 include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
@@ -20,10 +14,6 @@ include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf
 include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main' 
 include { MULTIQC              } from '../modules/nf-core/multiqc/main'
-include { CLAIR3_CUSTOM        } from '../modules/local/clair3_custom/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
-// use the CLAIR3 process when you want to use a locally-stored clair3 model 
-   // Usage: tuple(meta, bam, bai, null, user_model, platform)
-include { CLAIR3               } from '../modules/nf-core/clair3/main' // CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
 include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
 include { 
@@ -97,18 +87,7 @@ workflow {
     .map { meta, bam, bai -> tuple(meta, bam, bai) }
 
   // Variant calling of long reads
-  varcalls_l = CLAIR3_CUSTOM(
-    aligned_l.bam.map { meta, bam ->
-            def bai = file("${bam}.bai")
-            def packaged_model = params.clair3model // must be null if using user_model
-            def user_model = null // use process CLAIR3 if you are filling this input
-            def platform = "ont"
-            return tuple(meta, bam, bai, packaged_model, user_model, platform)
-        },
-    ch_queryfasta.first(),
-    //ch_queryfasta.first(),
-    ch_queryfai.first()
-  )
+  //varcalls_l = // CLAIR3 removed, to be replaced as per issue #4
 
 
 
