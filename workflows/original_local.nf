@@ -23,6 +23,7 @@ include {
   SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
+include { HMMIBDRS             } from '../modules/local/hmmibdrs/mainf'
 
 
 
@@ -134,9 +135,24 @@ workflow {
   ).varcalls_s
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
+/*
+  varcalls = varcalls_s
 
+  // Filter to sites where every sample has a populated AD.
+  // GATK emits "." at low-coverage or filtered positions, which hmmibd-rs
+  // rejects at parse time with NumericaValueEmptyInt.
+  ch_hmmibd_input = BCFTOOLS_VIEW(
+      varcalls,
+      [],
+      [],
+      []
+  )
+  ch_versions = ch_versions.mix(BCFTOOLS_VIEW.out.versions)
 
-
+  hmmibd_out = HMMIBDRS(
+      ch_hmmibd_input.vcf.join(ch_hmmibd_input.index, by: 0)
+  )
+*/
 
   // POST PROCESSING (eg final ops for multiqc report)
 

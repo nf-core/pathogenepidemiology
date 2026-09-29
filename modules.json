@@ -15,6 +15,11 @@
                         "git_sha": "feef37435aea56816adf4b3bde1fc76aac327a8d",
                         "installed_by": ["modules"]
                     },
+                    "bcftools/view": {
+                        "branch": "master",
+                        "git_sha": "feef37435aea56816adf4b3bde1fc76aac327a8d",
+                        "installed_by": ["modules"]
+                    },
                     "bwamem3/index": {
                         "branch": "master",
                         "git_sha": "cab334f632708de2679161f713dd969bfa491a25",
