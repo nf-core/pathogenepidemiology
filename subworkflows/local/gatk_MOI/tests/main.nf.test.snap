@@ -1,0 +1,73 @@
+{
+    "GATK_MOI stub workflow": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "cohort"
+                        },
+                        "cohort.bcf.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                        "cohort.bcf.gz.csi:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    [
+                        "GATK_MOI:BCFTOOLS_CONCAT",
+                        "bcftools",
+                        ""
+                    ],
+                    [
+                        "GATK_MOI:GATK4_CREATESEQUENCEDICTIONARY",
+                        "gatk4",
+                        ""
+                    ]
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "insert_size_metrics": [
+                    
+                ],
+                "mosdepth_global": [
+                    
+                ],
+                "mosdepth_summary": [
+                    
+                ],
+                "varcalls_s": [
+                    [
+                        {
+                            "id": "cohort"
+                        },
+                        "cohort.bcf.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                        "cohort.bcf.gz.csi:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    [
+                        "GATK_MOI:BCFTOOLS_CONCAT",
+                        "bcftools",
+                        ""
+                    ],
+                    [
+                        "GATK_MOI:GATK4_CREATESEQUENCEDICTIONARY",
+                        "gatk4",
+                        ""
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-09-30T21:17:42.036591032",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
+        }
+    }
+}
