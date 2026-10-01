@@ -1,0 +1,54 @@
+nextflow_workflow {
+    name "Test Subworkflow GATK_MOI"
+    script "../../gatk_MOI.nf"
+    config "./nextflow.config"
+    workflow "GATK_MOI"
+    options "-stub"
+
+    test("GATK_MOI stub workflow") {
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    tuple(
+                        [id: 'test'],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam.bai', checkIfExists: true)
+                    )
+                )
+                input[1] = Channel.of(
+                    tuple(
+                        [id: 'test_fa'],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
+                    )
+                )
+                input[2] = Channel.of(
+                    tuple(
+                        [id: 'test_fai'],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta.fai', checkIfExists: true)
+                    )
+                )
+                input[3] = Channel.of(
+                    tuple(
+                        [id: 'resource'],
+                        file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)
+                    )
+                )
+                input[4] = Channel.of(
+                    tuple(
+                        [id: 'resource'],
+                        file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
+                    )
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match() }
+            )
+        }
+    }
+}
