@@ -1,0 +1,16 @@
+{
+    "reference fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    "Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.gz:md5,83d6e811dbeb65728b287d9ab8a36a12"
+                ]
+            }
+        ],
+        "timestamp": "2026-10-02T10:55:04.672269601",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
+        }
+    }
+}
