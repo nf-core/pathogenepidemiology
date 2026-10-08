@@ -1,0 +1,32 @@
+nextflow_workflow {
+    name "Test Subworkflow PHYLOGENY"
+    script "../phylogeny.nf"
+    config "./nextflow.config"
+    workflow "PHYLOGENY"
+    options "-stub"
+
+    test("Consensus to MAFFT to IQ-TREE") {
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    tuple(
+                        [id: 'test'],
+                        file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/vcf/test.vcf.gz', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/vcf/test.vcf.gz.tbi', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true),
+                        []
+                    )
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.phylogeny }
+            )
+        }
+    }
+}
