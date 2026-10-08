@@ -23,6 +23,7 @@ include {
   SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
+include { PHYLOGENY            } from '../subworkflows/local/phylogeny/phylogeny.nf'
 include { HMMIBDRS             } from '../modules/local/hmmibdrs/mainf'
 
 
@@ -133,6 +134,18 @@ workflow {
     Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),   
     Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")  
   ).varcalls_s
+
+  // Generate one consensus FASTA per WGS sample from the cohort BCF
+  ch_reference = ch_queryfasta.map { meta, fasta -> fasta }.first()
+
+  ch_consensus_input = varcalls_s
+    .combine(ch_wgs_bam_s.map { meta, bam -> meta })
+    .combine(ch_reference)
+    .map { cohort_meta, bcf, csi, sample_meta, fasta ->
+        tuple(sample_meta, bcf, csi, fasta, [])
+    }
+    
+  phylogeny_s = PHYLOGENY(ch_consensus_input)
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
 /*
