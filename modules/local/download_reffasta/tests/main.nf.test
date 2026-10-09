@@ -1,0 +1,30 @@
+nextflow_process {
+
+    name "Test Process DOWNLOAD_REFFASTA"
+    script "../main.nf"
+    process "DOWNLOAD_REFFASTA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "download_reffasta"
+
+    test("reference fasta - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = "https://ftp.ebi.ac.uk/ensemblgenomes/pub/protists/release-62/fasta/plasmodium_falciparum/dna/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.gz"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
