@@ -18,7 +18,7 @@ workflow PREPARE_REFERENCES {
 
     ch_query    = DOWNLOAD_QUERYFASTA(ch_queryref).fasta
     hostfasta   = DOWNLOAD_HOSTFASTA(ch_hostref).fasta
-    queryfasta  = GUNZIP_QUERYFASTA(ch_query).gzipped
+    queryfasta  = GUNZIP_QUERYFASTA(ch_query).gunzipped
 
     queryfasta  = queryfasta.map { ref -> tuple([id: ref.baseName], ref) }
     
