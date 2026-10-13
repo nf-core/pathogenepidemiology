@@ -37,11 +37,10 @@ workflow GATK_MOI {
     ch_vqsr_resource_tbi
 
     main:
-    ch_versions = Channel.empty()
+    
 
     GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
-    ch_versions = ch_versions.mix(GATK4_CREATESEQUENCEDICTIONARY.out.versions_gatk4)
-
+    
     ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
     ch_fasta_val = ch_queryfasta.map { meta, fasta -> fasta }.first()
@@ -54,10 +53,8 @@ workflow GATK_MOI {
         ch_aligned_s,
         ch_queryfasta.join(ch_queryfai, by: 0).first()
     )
-    ch_versions = ch_versions.mix(GATK4_CLEANSAM.out.versions_gatk)
 
     PICARD_SORTSAM(GATK4_CLEANSAM.out.bam, 'coordinate')
-    ch_versions = ch_versions.mix(PICARD_SORTSAM.out.versions_picard)
 
     def core_bed = file("${projectDir}/assets/Pf3D7_core.bed")
 
@@ -67,17 +64,14 @@ workflow GATK_MOI {
         ch_fai_val,
         core_bed
     )
-    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_CUSTOM.out.versions_gatk4)
-    ch_versions = ch_versions.mix(GATK4_MARKDUPLICATES_CUSTOM.out.versions_samtools)
-
+    
     ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam
         .join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
 
     PICARD_COLLECTINSERTSIZEMETRICS(
         ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam) }
     )
-    ch_versions = ch_versions.mix(PICARD_COLLECTINSERTSIZEMETRICS.out.versions_picard)
-
+    
     ch_mosdepth_input = ch_dedup_bam
         .map { meta, bam, bai -> tuple(meta, bam, bai, core_bed) }
 
@@ -86,10 +80,7 @@ workflow GATK_MOI {
         ch_queryfasta.first(),
         []
     )
-    ch_versions = ch_versions.mix(MOSDEPTH.out.versions_mosdepth)
-    ch_versions = ch_versions.mix(MOSDEPTH.out.versions_gzip)
-
-    // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
+    
     ch_intervals = Channel.fromPath("${projectDir}/assets/intervals/core_chr*.list")
         .map { list ->
             def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr')
@@ -111,7 +102,6 @@ workflow GATK_MOI {
         [ [:], [] ],
         [ [:], [] ]
     )
-    ch_versions = ch_versions.mix(GATK4_HAPLOTYPECALLER.out.versions_gatk4)
 
     ch_gdbi_input = GATK4_HAPLOTYPECALLER.out.vcf
         .join(GATK4_HAPLOTYPECALLER.out.tbi, by: 0)
@@ -136,7 +126,6 @@ workflow GATK_MOI {
         false,
         false
     )
-    ch_versions = ch_versions.mix(GATK4_GENOMICSDBIMPORT.out.versions_gatk4)
 
     GATK4_GENOTYPEGVCFS(
         GATK4_GENOMICSDBIMPORT.out.genomicsdb.map { meta, db -> tuple(meta, db, [], [], []) },
@@ -146,7 +135,6 @@ workflow GATK_MOI {
         [ [:], [] ],
         [ [:], [] ]
     )
-    ch_versions = ch_versions.mix(GATK4_GENOTYPEGVCFS.out.versions_gatk4)
 
     ch_raw_vcf = GATK4_GENOTYPEGVCFS.out.vcf
         .join(GATK4_GENOTYPEGVCFS.out.tbi, by: 0)
@@ -168,7 +156,6 @@ workflow GATK_MOI {
         ch_fai_val,
         ch_dict_val
     )
-    ch_versions = ch_versions.mix(GATK4_VARRECAL_INDELS.out.versions_gatk4)
 
     GATK4_VQSR_INDELS(
         ch_raw_vcf
@@ -179,7 +166,6 @@ workflow GATK_MOI {
         ch_fai_val,
         ch_dict_val
     )
-    ch_versions = ch_versions.mix(GATK4_VQSR_INDELS.out.versions_gatk4)
 
     ch_indelrecal_vcf = GATK4_VQSR_INDELS.out.vcf
         .join(GATK4_VQSR_INDELS.out.tbi, by: 0)
@@ -193,7 +179,6 @@ workflow GATK_MOI {
         ch_fai_val,
         ch_dict_val
     )
-    ch_versions = ch_versions.mix(GATK4_VARRECAL_SNPS.out.versions_gatk4)
 
     GATK4_VQSR_SNPS(
         ch_indelrecal_vcf
@@ -204,7 +189,6 @@ workflow GATK_MOI {
         ch_fai_val,
         ch_dict_val
     )
-    ch_versions = ch_versions.mix(GATK4_VQSR_SNPS.out.versions_gatk4)
 
     ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf
         .join(GATK4_VQSR_SNPS.out.tbi, by: 0)
@@ -219,14 +203,12 @@ workflow GATK_MOI {
         }
 
     BCFTOOLS_CONCAT(ch_concat_input)
-    ch_versions = ch_versions.mix(BCFTOOLS_CONCAT.out.versions_bcftools)
 
     varcalls_s = BCFTOOLS_CONCAT.out.vcf.join(BCFTOOLS_CONCAT.out.index, by: 0)
 
     emit:
     varcalls_s          = varcalls_s
     insert_size_metrics = ch_insert_metrics
-    versions            = ch_versions
     mosdepth_summary    = ch_mosdepth_sum
     mosdepth_global     = ch_mosdepth_glob
 
