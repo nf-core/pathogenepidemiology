@@ -17,12 +17,13 @@ workflow PREPROCESS_READS {
         .splitCsv(header: true, quote: '"')
         .map { row ->
             if (!row.fastq_1) throw new Exception("Missing fastq_1 for ${row.sample}")
+            // TODO: work out a metadata schema that we instruct users to work with
             def meta = [
-                id: row.run_accession,
+                id: row.run_accession, // TODO: support runs with no accession
                 single_end: row.fastq_2 == '',
                 library_strategy: row.library_strategy,
                 instrument_platform: row.instrument_platform,
-                study_accession: row.study_accession
+                study_accession: row.study_accession // TODO: support runs with no accession
                 ]
             def reads = row.fastq_2 ? [file(row.fastq_1), file(row.fastq_2)] : [file(row.fastq_1)]
             tuple(meta, reads, row.instrument_platform)
