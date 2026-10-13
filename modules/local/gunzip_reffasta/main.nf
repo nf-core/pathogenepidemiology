@@ -3,7 +3,7 @@ process GUNZIP_REFFASTA {
     path ref_gz
     
     output:
-    path "${ref_gz.baseName}", emit: gzipped
+    path "${ref_gz.baseName}", emit: gunzipped
     
     script:
     """

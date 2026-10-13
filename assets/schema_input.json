@@ -37,6 +37,10 @@
                 "type": "string",
                 "errorMessage": "instrument_platform must be provided (e.g. ILLUMINA, OXFORD_NANOPORE, DNBSEQ)",
                 "meta": ["instrument_platform"]
+            },
+            "single_end": {
+                "type": "boolean",
+                "meta": ["single_end"]
             }
         },
         "required": ["run_accession", "fastq_1", "library_strategy", "instrument_platform"]

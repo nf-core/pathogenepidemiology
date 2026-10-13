@@ -3,28 +3,28 @@
 // STATUS: draft scaffold -- wires the full chain (CleanSam -> ... -> ApplyVQSR)
 
 
-include { GATK4_CLEANSAM                  } from '../../modules/nf-core/gatk4/cleansam/main'
-include { PICARD_SORTSAM                  } from '../../modules/nf-core/picard/sortsam/main'
-include { GATK4_CREATESEQUENCEDICTIONARY  } from '../../modules/nf-core/gatk4/createsequencedictionary/main'
-include { GATK4_MARKDUPLICATES_CUSTOM     } from '../../modules/local/gatk4/markduplicates_custom/main'
-include { MOSDEPTH                        } from '../../modules/nf-core/mosdepth/main'
-include { PICARD_COLLECTINSERTSIZEMETRICS } from '../../modules/nf-core/picard/collectinsertsizemetrics/main'
-include { GATK4_HAPLOTYPECALLER           } from '../../modules/nf-core/gatk4/haplotypecaller/main'
-include { GATK4_GENOMICSDBIMPORT          } from '../../modules/nf-core/gatk4/genomicsdbimport/main'
-include { GATK4_GENOTYPEGVCFS             } from '../../modules/nf-core/gatk4/genotypegvcfs/main'
-include { BCFTOOLS_CONCAT                 } from '../../modules/nf-core/bcftools/concat/main'
+include { GATK4_CLEANSAM                  } from '../../../modules/nf-core/gatk4/cleansam/main'
+include { PICARD_SORTSAM                  } from '../../../modules/nf-core/picard/sortsam/main'
+include { GATK4_CREATESEQUENCEDICTIONARY  } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
+include { GATK4_MARKDUPLICATES_CUSTOM     } from '../../../modules/local/gatk4/markduplicates_custom/main'
+include { MOSDEPTH                        } from '../../../modules/nf-core/mosdepth/main'
+include { PICARD_COLLECTINSERTSIZEMETRICS } from '../../../modules/nf-core/picard/collectinsertsizemetrics/main'
+include { GATK4_HAPLOTYPECALLER           } from '../../../modules/nf-core/gatk4/haplotypecaller/main'
+include { GATK4_GENOMICSDBIMPORT          } from '../../../modules/nf-core/gatk4/genomicsdbimport/main'
+include { GATK4_GENOTYPEGVCFS             } from '../../../modules/nf-core/gatk4/genotypegvcfs/main'
+include { BCFTOOLS_CONCAT                 } from '../../../modules/nf-core/bcftools/concat/main'
 include {
   GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_INDELS
-} from '../../modules/nf-core/gatk4/variantrecalibrator/main'
+} from '../../../modules/nf-core/gatk4/variantrecalibrator/main'
 include {
   GATK4_APPLYVQSR as GATK4_VQSR_INDELS
-} from '../../modules/nf-core/gatk4/applyvqsr/main'
+} from '../../../modules/nf-core/gatk4/applyvqsr/main'
 include {
   GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_SNPS
-} from '../../modules/nf-core/gatk4/variantrecalibrator/main'
+} from '../../../modules/nf-core/gatk4/variantrecalibrator/main'
 include {
   GATK4_APPLYVQSR as GATK4_VQSR_SNPS
-} from '../../modules/nf-core/gatk4/applyvqsr/main'
+} from '../../../modules/nf-core/gatk4/applyvqsr/main'
 
 
 workflow GATK_MOI {

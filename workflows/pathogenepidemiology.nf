@@ -4,15 +4,16 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references.nf'
-include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads.nf'
+include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references'
+include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads'
 include { MINIMAP2_INDEX                       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN                       } from '../modules/nf-core/minimap2/align/main'
 include { BWAMEM3_INDEX                        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM                          } from '../modules/nf-core/bwamem3/mem/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
-include { GATK_MOI                             } from '../subworkflows/local/gatk_MOI'
+include { GATK_MOI                             } from '../subworkflows/local/gatk_MOI/main'
+include { BCFTOOLS_STATS                       } from '../modules/nf-core/bcftools/stats/main'
 //include { HMMIBDRS                             } from '../modules/local/hmmibdrs/main'
 include { MULTIQC                              } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap                     } from 'plugin/nf-schema'
@@ -55,7 +56,7 @@ workflow PATHOGENEPIDEMIOLOGY {
     // SUBWORKFLOW: FastQC on reads, BBDUK adapter/contaminant removal
     //
     PREPROCESS_READS(
-        params.input,
+        ch_samplesheet,
         ch_hostfasta,
         params.adapters
     )
@@ -138,6 +139,16 @@ workflow PATHOGENEPIDEMIOLOGY {
     )
     def varcalls_s = gatk_out.varcalls_s
 
+    def ch_bcftools_stats = BCFTOOLS_STATS(
+        varcalls_s,        // [meta, bcf, csi]
+        [[:], []],         // regions
+        [[:], []],         // targets
+        [[:], []],         // samples
+        [[:], []],         // exons
+        [[:], []]          // fasta
+    )
+
+
     // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
 /*
     varcalls = varcalls_s
@@ -173,7 +184,7 @@ workflow PATHOGENEPIDEMIOLOGY {
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_mm2stats.stats.map { _meta, files -> files },
         ch_bm3stats.stats.map { _meta, files -> files },
-        varcalls_s.map { _meta, vcf, _idx -> vcf },
+        ch_bcftools_stats.stats.map { _meta, files -> files },
         gatk_out.mosdepth_summary.map { _meta, files -> files },
         gatk_out.mosdepth_global.map { _meta, files -> files },
         gatk_out.insert_size_metrics.map { _meta, files -> files }

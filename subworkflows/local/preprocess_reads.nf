@@ -8,35 +8,15 @@ include { BBDUK_CUSTOM } from '../../modules/local/bbduk_custom/main'
 workflow PREPROCESS_READS {
 
     take:
-    samplesheet
+    ch_samples
     ch_hostfasta // from workflow PREPARE_REFERENCES
     adapters
 
     main:
-    ch_samples = Channel.fromPath(samplesheet)
-        .splitCsv(header: true, quote: '"')
-        .map { row ->
-            if (!row.fastq_1) throw new Exception("Missing fastq_1 for ${row.sample}")
-            // TODO: work out a metadata schema that we instruct users to work with
-            def meta = [
-                id: row.run_accession, // TODO: support runs with no accession
-                single_end: row.fastq_2 == '',
-                library_strategy: row.library_strategy,
-                instrument_platform: row.instrument_platform,
-                study_accession: row.study_accession // TODO: support runs with no accession
-                ]
-            def reads = row.fastq_2 ? [file(row.fastq_1), file(row.fastq_2)] : [file(row.fastq_1)]
-            tuple(meta, reads, row.instrument_platform)
-            }
-    // Drop platform for FASTQC and BBDUK
-    ch_reads_raw = ch_samples.map { meta, reads, platform ->
-        tuple(meta, reads)
-    }
-
-    
+    ch_reads_raw = ch_samples
 
     // Produce QC reports per sample
-    fastqc_out = FASTQC(ch_reads_raw)
+    fastqc_out = FASTQC(ch_samples)
     
 
     ch_adapters = Channel.fromPath(adapters)
@@ -48,7 +28,7 @@ workflow PREPROCESS_READS {
     bbduk_stats   = ch_reads_clean.stats
     bbduk_logs    = ch_reads_clean.log
     bbduk_dropped = ch_reads_clean.discarded
-    samples       = ch_samples
+    samples       = ch_samples.map { meta, reads -> tuple(meta, reads, meta.instrument_platform) }
     fastqc        = fastqc_out.zip
 }
 
