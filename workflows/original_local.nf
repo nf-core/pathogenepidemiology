@@ -1,14 +1,4 @@
 
-//params.query_genus = "Plasmodium"     //not used for now
-//params.query_species = "falciparum"   //not used for now
-//params.query_ref = "${params.outdir}/download/${params.query_genus}_${params.query_species}*.{fa,fasta,fa.gz,fasta.gz}" //not used for now
-params.threads = 4
-
-
-// CLAIR3 WILL BE PATCHED OUT FOR SOMETHING THAT HANDLES POLYPLOIDY BETTER
-
-
-
 include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
 include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf'
 include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'

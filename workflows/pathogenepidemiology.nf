@@ -9,14 +9,10 @@ include { BBDUK_CUSTOM           } from '../modules/local/bbduk_custom/main'
 include { MINIMAP2_INDEX         } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN         } from '../modules/nf-core/minimap2/align/main' 
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
-include { CLAIR3_CUSTOM          } from '../modules/local/clair3_custom/main'
-// use the CLAIR3 process when you want to use a locally-stored clair3 model 
-   // Usage: tuple(meta, bam, bai, null, user_model, platform)
-include { CLAIR3                 } from '../modules/nf-core/clair3/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_pathogenepidemiology_pipeline'
+include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline/main'
+include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline/main'
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_pathogenepidemiology_pipeline/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
