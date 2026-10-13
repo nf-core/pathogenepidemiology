@@ -16,9 +16,9 @@ workflow PREPARE_REFERENCES {
     ch_hostref  = Channel.of(hosturl)
     
 
-    ch_query    = DOWNLOAD_QUERYFASTA(ch_queryref)
-    hostfasta   = DOWNLOAD_HOSTFASTA(ch_hostref)
-    queryfasta  = GUNZIP_QUERYFASTA(ch_query)
+    ch_query    = DOWNLOAD_QUERYFASTA(ch_queryref).fasta
+    hostfasta   = DOWNLOAD_HOSTFASTA(ch_hostref).fasta
+    queryfasta  = GUNZIP_QUERYFASTA(ch_query).gzipped
 
     queryfasta  = queryfasta.map { ref -> tuple([id: ref.baseName], ref) }
     

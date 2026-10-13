@@ -5,7 +5,7 @@ process DOWNLOAD_REFFASTA {
     val ref_url
     
     output:
-    path "${ref_url.toString().split('/').last()}"
+    path "${ref_url.toString().split('/').last()}", emit:fasta
     
     script:
     """
