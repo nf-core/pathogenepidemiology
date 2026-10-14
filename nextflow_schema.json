@@ -5,6 +5,40 @@
     "description": "A profile-based pipeline for genomic epidemiological analysis of predefined pathogens.",
     "type": "object",
     "$defs": {
+        "pipeline_input_options": {
+            "title": "Pipeline input options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Inputs specific to the pathogen epidemiology pipeline.",
+            "properties": {
+                "queryurl": {
+                    "type": "string",
+                    "description": "URL of the query reference FASTA to download.",
+                    "fa_icon": "fas fa-link"
+                },
+                "hosturl": {
+                    "type": "string",
+                    "description": "URL of the host reference FASTA to download.",
+                    "fa_icon": "fas fa-link"
+                },
+                "adapters": {
+                    "type": "string",
+                    "description": "Path to the adapters FASTA for BBDUK trimming.",
+                    "fa_icon": "fas fa-file"
+                },
+                "bwamem3_outdir": {
+                    "type": "string",
+                    "description": "Output directory for BWA-MEM3 alignments.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "threads": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "Number of CPU threads to use per process.",
+                    "fa_icon": "fas fa-microchip"
+                }
+            }
+        },
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",

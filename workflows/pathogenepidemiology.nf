@@ -58,7 +58,6 @@ workflow PATHOGENEPIDEMIOLOGY {
     PREPROCESS_READS(
         ch_samplesheet,
         ch_hostfasta,
-        params.adapters
     )
     def ch_reads_clean   = PREPROCESS_READS.out.reads_clean
     def ch_bbduk_stats   = PREPROCESS_READS.out.bbduk_stats
