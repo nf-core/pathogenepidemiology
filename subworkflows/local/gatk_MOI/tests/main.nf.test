@@ -1,6 +1,6 @@
 nextflow_workflow {
     name "Test Subworkflow GATK_MOI"
-    script "../../gatk_MOI.nf"
+    script "../main.nf"
     config "./nextflow.config"
     workflow "GATK_MOI"
     options "-stub"

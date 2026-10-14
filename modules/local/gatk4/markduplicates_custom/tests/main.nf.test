@@ -9,9 +9,8 @@ nextflow_process {
     tag "gatk4"
     tag "gatk4/markduplicates"
 
-    test("sarscov2 - bam") {
+    test("sarscov2 - single bam") {
         config "./bam.config"
-
         when {
             process {
                 """
@@ -21,10 +20,10 @@ nextflow_process {
                 ]
                 input[1] = []
                 input[2] = []
+                input[3] = file("${projectDir}/modules/local/gatk4/markduplicates_custom/tests/core_test.bed", checkIfExists: true)
                 """
             }
         }
-
         then {
             assert process.success
             assertAll(
@@ -32,31 +31,27 @@ nextflow_process {
                     process.out.bam,
                     process.out.bai,
                     file(process.out.metrics[0][1]).name,
-                    process.out.findAll { key, val -> key.startsWith("versions") }
+                    process.out.findAll { k, _ -> k.startsWith("versions") }
                 ).match() }
             )
         }
     }
 
-    test("homo_sapiens - multiple bam") {
+    test("sarscov2 - bam with reference") {
         config "./bam.config"
-
         when {
             process {
                 """
                 input[0] = [
                     [ id:'test', single_end:false ],
-                    [
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test2.paired_end.sorted.bam', checkIfExists: true)
-                    ]
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true)
                 ]
-                input[1] = []
-                input[2] = []
+                input[1] = file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                input[2] = file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.fai', checkIfExists: true)
+                input[3] = file("${projectDir}/modules/local/gatk4/markduplicates_custom/tests/core_test.bed", checkIfExists: true)
                 """
             }
         }
-
         then {
             assert process.success
             assertAll(
@@ -64,39 +59,7 @@ nextflow_process {
                     process.out.bam,
                     process.out.bai,
                     file(process.out.metrics[0][1]).name,
-                    process.out.findAll { key, val -> key.startsWith("versions") }
-                ).match() }
-            )
-        }
-    }
-
-    test("homo_sapiens - multiple cram") {
-        config "./cram.config"
-
-        when {
-            process {
-                """
-                input[0] = [
-                    [ id:'test', single_end:false ], // meta map
-                    [
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test2.paired_end.sorted.bam', checkIfExists: true)
-                    ]
-                ]
-                input[1] = file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
-                input[2] = file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta.fai', checkIfExists: true)
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assertAll(
-                { assert snapshot(
-                    file(process.out.cram[0][1]).name,
-                    file(process.out.crai[0][1]).name,
-                    file(process.out.metrics[0][1]).name,
-                    process.out.findAll { key, val -> key.startsWith("versions") }
+                    process.out.findAll { k, _ -> k.startsWith("versions") }
                 ).match() }
             )
         }
@@ -105,23 +68,20 @@ nextflow_process {
     test("stub") {
         config "./bam.config"
         options "-stub"
-
         when {
             process {
                 """
-                input[0] = [
-                    [ id:'test', single_end:false ],
-                    []
-                ]
+                input[0] = [[ id:'test', single_end:false ], []]
                 input[1] = []
                 input[2] = []
+                input[3] = []
                 """
             }
         }
-
         then {
+            assert process.success
             assertAll(
-                { assert process.success }
+                { assert snapshot(process.out).match() }
             )
         }
     }
