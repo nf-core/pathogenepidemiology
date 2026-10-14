@@ -1,5 +1,5 @@
 {
-    "sarscov2 - bam": {
+    "sarscov2 - single bam": {
         "content": [
             [
                 [
@@ -7,7 +7,7 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bam:md5,a9994ba43be93769a06d4814e95928cd"
+                    "test.bam.pf.bam:md5,2a7c3bbd07bc6705ed0579a682413989"
                 ]
             ],
             [
@@ -16,7 +16,7 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bai:md5,fd1c3cc02f4e223d32eedeed842b86c7"
+                    "test.bam.pf.bam.bai:md5,0d76977b2e36046cc176112776c5fa4e"
                 ]
             ],
             "test.bam.metrics",
@@ -37,13 +37,13 @@
                 ]
             }
         ],
+        "timestamp": "2026-10-14T17:21:21.675979284",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.3"
-        },
-        "timestamp": "2026-02-05T16:39:06.851947547"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.0"
+        }
     },
-    "homo_sapiens - multiple bam": {
+    "sarscov2 - bam with reference": {
         "content": [
             [
                 [
@@ -51,7 +51,7 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bam:md5,6fee419d69f55f53b5a0d0334a5f9615"
+                    "test.bam.pf.bam:md5,1ff6f69759044a70e94aedc4041d8625"
                 ]
             ],
             [
@@ -60,7 +60,7 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bai:md5,2b1603773979ad06f4dbcbaa90e93e8c"
+                    "test.bam.pf.bam.bai:md5,0d76977b2e36046cc176112776c5fa4e"
                 ]
             ],
             "test.bam.metrics",
@@ -81,18 +81,83 @@
                 ]
             }
         ],
+        "timestamp": "2026-10-14T17:23:47.365793552",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.3"
-        },
-        "timestamp": "2026-02-05T16:39:14.928475242"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.0"
+        }
     },
-    "homo_sapiens - multiple cram": {
+    "stub": {
         "content": [
-            "test.cram",
-            "test.cram.crai",
-            "test.cram.metrics",
             {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.pf.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.pf.bam.bai:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.metrics:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        "GATK4_MARKDUPLICATES_CUSTOM",
+                        "gatk4",
+                        "4.6.2.0"
+                    ]
+                ],
+                "4": [
+                    [
+                        "GATK4_MARKDUPLICATES_CUSTOM",
+                        "samtools",
+                        "1.21"
+                    ]
+                ],
+                "bai": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.pf.bam.bai:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "bam": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.pf.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "metrics": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.metrics:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
                 "versions_gatk4": [
                     [
                         "GATK4_MARKDUPLICATES_CUSTOM",
@@ -109,10 +174,10 @@
                 ]
             }
         ],
+        "timestamp": "2026-10-14T17:26:05.915049834",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.3"
-        },
-        "timestamp": "2026-02-05T16:39:23.543842929"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.0"
+        }
     }
 }
