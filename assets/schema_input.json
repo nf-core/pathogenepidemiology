@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/pathogenepidemiology/main/assets/schema_input.json",
     "title": "nf-core/pathogenepidemiology pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input. Only the columns required to import and route the reads are declared; any additional columns in the samplesheet (e.g. ENA metadata appended by nf-core/fetchngs) are ignored with a warning.",
+    "description": "Schema for the file provided with params.input. Only the columns required to import and route the reads are declared; any additional columns in the samplesheet (e.g. ENA metadata appended by nf-core/fetchngs) are ignored.",
     "type": "array",
     "items": {
         "type": "object",
@@ -11,8 +11,7 @@
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "Run accession (e.g. ERR123456) must be provided and cannot contain spaces",
-                "meta": ["id"],
-                "unique": true
+                "meta": ["id"]
             },
             "fastq_1": {
                 "type": "string",
@@ -37,10 +36,6 @@
                 "type": "string",
                 "errorMessage": "instrument_platform must be provided (e.g. ILLUMINA, OXFORD_NANOPORE, DNBSEQ)",
                 "meta": ["instrument_platform"]
-            },
-            "single_end": {
-                "type": "boolean",
-                "meta": ["single_end"]
             }
         },
         "required": ["run_accession", "fastq_1", "library_strategy", "instrument_platform"]
