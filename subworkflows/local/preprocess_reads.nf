@@ -10,16 +10,14 @@ workflow PREPROCESS_READS {
     take:
     ch_samples
     ch_hostfasta // from workflow PREPARE_REFERENCES
-    adapters
 
     main:
+    ch_adapters = Channel.fromPath("${projectDir}/assets/adapters.fa", checkIfExists: true)
     ch_reads_raw = ch_samples
 
     // Produce QC reports per sample
     fastqc_out = FASTQC(ch_samples)
     
-
-    ch_adapters = Channel.fromPath(adapters)
     // Filter out host reads, adapters, phix
     ch_reads_clean = BBDUK_CUSTOM(ch_reads_raw, ch_hostfasta.first(), ch_adapters.first())
 

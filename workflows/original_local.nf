@@ -34,8 +34,7 @@ workflow {
   // RUN FASTQC ON READS AND USE BBDUK TO REMOVE ADAPTER AND BIO. CONTAMINANT SEQS
   PREPROCESS_READS(
     params.samplesheet,
-    ch_hostfasta,
-    params.adapters
+    ch_hostfasta
   )
 
   ch_reads_clean    = PREPROCESS_READS.out.reads_clean
