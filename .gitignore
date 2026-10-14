@@ -13,3 +13,4 @@ refs
 #nf-test.config
 *log*
 .nf-test
+local_lint.sh

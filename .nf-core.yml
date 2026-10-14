@@ -2,12 +2,12 @@ lint: {}
 nf_core_version: 4.1.0
 repository_type: pipeline
 template:
-  author: author: Igiraneza Clement <clement@example.com>, Bilal Asser <asserbbioinfoprojects@gmail.com>, Firas Zemzem <firas@example.com>
+  author: Igiraneza Clement, Bilal Asser, Firas Zemzem
   description: A profile-based pipeline for genomic epidemiological analysis of predefined
     pathogens.
   force: false
   is_nfcore: true
-  name: pathogenepidemiology
+  name: nf-core/pathogenepidemiology
   org: nf-core
   outdir: .
   version: 0.1.0dev
