@@ -37,10 +37,10 @@ workflow GATK_MOI {
     ch_vqsr_resource_tbi
 
     main:
-    
+
 
     GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
-    
+
     ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
     ch_fasta_val = ch_queryfasta.map { meta, fasta -> fasta }.first()
@@ -64,14 +64,14 @@ workflow GATK_MOI {
         ch_fai_val,
         core_bed
     )
-    
+
     ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam
         .join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
 
     PICARD_COLLECTINSERTSIZEMETRICS(
         ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam) }
     )
-    
+
     ch_mosdepth_input = ch_dedup_bam
         .map { meta, bam, bai -> tuple(meta, bam, bai, core_bed) }
 
@@ -80,7 +80,7 @@ workflow GATK_MOI {
         ch_queryfasta.first(),
         []
     )
-    
+
     ch_intervals = Channel.fromPath("${projectDir}/assets/intervals/core_chr*.list")
         .map { list ->
             def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr')
@@ -139,13 +139,13 @@ workflow GATK_MOI {
     ch_raw_vcf = GATK4_GENOTYPEGVCFS.out.vcf
         .join(GATK4_GENOTYPEGVCFS.out.tbi, by: 0)
         // ignore relatively empty vcfs (<8KB), these break VQSR at --max-gaussians 4
-        .filter { meta, vcf, tbi -> vcf.size() > 8000 } 
+        .filter { meta, vcf, tbi -> vcf.size() > 8000 }
 
 
     ch_insert_metrics = PICARD_COLLECTINSERTSIZEMETRICS.out.metrics
     ch_mosdepth_sum   = MOSDEPTH.out.summary_txt
     ch_mosdepth_glob  = MOSDEPTH.out.global_txt
-    
+
 
     GATK4_VARRECAL_INDELS(
         ch_raw_vcf,

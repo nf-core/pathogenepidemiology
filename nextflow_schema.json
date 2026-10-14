@@ -21,16 +21,6 @@
                     "description": "URL of the host reference FASTA to download.",
                     "fa_icon": "fas fa-link"
                 },
-                "adapters": {
-                    "type": "string",
-                    "description": "Path to the adapters FASTA for BBDUK trimming.",
-                    "fa_icon": "fas fa-file"
-                },
-                "bwamem3_outdir": {
-                    "type": "string",
-                    "description": "Output directory for BWA-MEM3 alignments.",
-                    "fa_icon": "fas fa-folder"
-                },
                 "threads": {
                     "type": "integer",
                     "default": 4,
@@ -278,6 +268,9 @@
         },
         {
             "$ref": "#/$defs/generic_options"
+        },
+        {
+            "$ref": "#/$defs/pipeline_input_options"
         }
     ]
 }

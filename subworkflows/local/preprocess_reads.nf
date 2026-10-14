@@ -17,7 +17,7 @@ workflow PREPROCESS_READS {
 
     // Produce QC reports per sample
     fastqc_out = FASTQC(ch_samples)
-    
+
     // Filter out host reads, adapters, phix
     ch_reads_clean = BBDUK_CUSTOM(ch_reads_raw, ch_hostfasta.first(), ch_adapters.first())
 
@@ -29,5 +29,3 @@ workflow PREPROCESS_READS {
     samples       = ch_samples.map { meta, reads -> tuple(meta, reads, meta.instrument_platform) }
     fastqc        = fastqc_out.zip
 }
-
-
