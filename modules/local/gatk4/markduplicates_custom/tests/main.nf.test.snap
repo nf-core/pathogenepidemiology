@@ -67,14 +67,14 @@
             {
                 "versions_gatk4": [
                     [
-                        "GATK4_MARKDUPLICATES",
+                        "GATK4_MARKDUPLICATES_CUSTOM",
                         "gatk4",
                         "4.6.2.0"
                     ]
                 ],
                 "versions_samtools": [
                     [
-                        "GATK4_MARKDUPLICATES",
+                        "GATK4_MARKDUPLICATES_CUSTOM",
                         "samtools",
                         "1.21"
                     ]
@@ -95,14 +95,14 @@
             {
                 "versions_gatk4": [
                     [
-                        "GATK4_MARKDUPLICATES",
+                        "GATK4_MARKDUPLICATES_CUSTOM",
                         "gatk4",
                         "4.6.2.0"
                     ]
                 ],
                 "versions_samtools": [
                     [
-                        "GATK4_MARKDUPLICATES",
+                        "GATK4_MARKDUPLICATES_CUSTOM",
                         "samtools",
                         "1.21"
                     ]
