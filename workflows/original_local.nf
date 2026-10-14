@@ -2,15 +2,15 @@
 include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
 include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf'
 include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
-include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main' 
+include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main'
 include { MULTIQC              } from '../modules/nf-core/multiqc/main'
 include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
-include { 
-  SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 
+include {
+  SAMTOOLS_STATS as SAMTOOLS_STATS_MM2
   } from '../modules/nf-core/samtools/stats/main'
-include { 
-  SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 
+include {
+  SAMTOOLS_STATS as SAMTOOLS_STATS_BM3
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
 include { HMMIBDRS             } from '../modules/local/hmmibdrs/mainf'
@@ -57,13 +57,13 @@ workflow {
     .map { meta, reads, platform ->
         tuple(meta, reads)
     }
-    
+
 
   // Alignment of long reads
   minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
   //minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
   aligned_l = MINIMAP2_ALIGN(
-    ch_samples_l,                                                    
+    ch_samples_l,
     minimap2_index.index.first(),      // reference as tuple
     true,                                                                    // bam_format
     'bai',                                                                   // bam_index_extension
@@ -98,10 +98,10 @@ workflow {
   // Alignment of short reads
   bwamem3_index = BWAMEM3_INDEX(ch_queryfasta)
   aligned_s = BWAMEM3_MEM(
-    ch_samples_s,                                                    
+    ch_samples_s,
     bwamem3_index.index.first(),
     ch_queryfasta.first(),
-    true                                    // sort the bam for gatk                                                                    
+    true                                    // sort the bam for gatk
     )
 
   // BWA-MEM3 stats
@@ -119,8 +119,8 @@ workflow {
     ch_queryfasta,
     ch_queryfai,
     // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
-    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),   
-    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")  
+    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),
+    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
   ).varcalls_s
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
@@ -147,14 +147,14 @@ workflow {
 
   // samtools stats input
   // takes tuple val(meta2), path(fasta), path(fai)
-  
+
   statsrefs = ch_queryfasta.join(ch_queryfai, by: 0)
                           .map { meta, ref, fai -> tuple(meta, ref, fai) }
-                          
+
   ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs.first())
   ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs.first())
 
-  // multiqc 
+  // multiqc
   ch_multiqc_input = Channel.empty()
     .mix(
         ch_fastqc_out.collect { meta, files -> files },

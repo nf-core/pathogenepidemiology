@@ -11,7 +11,7 @@ process GATK4_MARKDUPLICATES_CUSTOM {
     tuple val(meta), path(bam)
     path fasta
     path fasta_fai
-    path core_bed            
+    path core_bed
 
     output:
     tuple val(meta), path("*.pf.bam"),     emit: bam // *pf* because everything outside core genome is removed
