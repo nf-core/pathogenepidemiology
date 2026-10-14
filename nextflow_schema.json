@@ -258,6 +258,9 @@
     },
     "allOf": [
         {
+            "$ref": "#/$defs/pipeline_input_options"
+        },
+        {
             "$ref": "#/$defs/input_output_options"
         },
         {
@@ -268,9 +271,6 @@
         },
         {
             "$ref": "#/$defs/generic_options"
-        },
-        {
-            "$ref": "#/$defs/pipeline_input_options"
         }
     ]
 }
