@@ -133,7 +133,7 @@ workflow {
     .map { cohort_meta, bcf, csi, sample_meta, fasta ->
         tuple(sample_meta, bcf, csi, fasta, [])
     }
-    
+
   phylogeny_s = PHYLOGENY(ch_consensus_input)
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
