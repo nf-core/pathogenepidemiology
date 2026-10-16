@@ -5,40 +5,33 @@ nextflow_workflow {
     workflow "GATK_MOI"
     options "-stub"
 
-    test("GATK_MOI stub workflow") {
+    test("GATK_MOI emits no variant calls when stub VCFs are filtered out") {
         when {
             workflow {
                 """
                 input[0] = Channel.of(
                     tuple(
                         [id: 'test'],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam.bai', checkIfExists: true)
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true)
                     )
                 )
                 input[1] = Channel.of(
                     tuple(
-                        [id: 'test_fa'],
+                        [id: 'test_ref'],
                         file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
                     )
                 )
                 input[2] = Channel.of(
                     tuple(
-                        [id: 'test_fai'],
+                        [id: 'test_ref'],
                         file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta.fai', checkIfExists: true)
                     )
                 )
                 input[3] = Channel.of(
-                    tuple(
-                        [id: 'resource'],
-                        file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)
-                    )
+                    file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)
                 )
                 input[4] = Channel.of(
-                    tuple(
-                        [id: 'resource'],
-                        file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
-                    )
+                    file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
                 )
                 """
             }
@@ -47,8 +40,18 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(workflow.out).match() }
+                // Stub VCFs are below the size filter, so concat must not emit.
+                { assert workflow.out.varcalls_s.isEmpty() },
+                {
+                    [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
+                        assert channel.size() == 1
+                        assert channel[0].size() == 2
+                        assert channel[0][0] == [id: 'test']
+                        assert channel[0][1] instanceof String
+                    }
+                }
             )
         }
     }
+
 }
