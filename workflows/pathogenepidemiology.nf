@@ -5,7 +5,7 @@
 */
 
 include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references'
-include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads'
+include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads.nf'
 include { MINIMAP2_INDEX                       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN                       } from '../modules/nf-core/minimap2/align/main'
 include { BWAMEM3_INDEX                        } from '../modules/nf-core/bwamem3/index/main'
@@ -127,14 +127,14 @@ workflow PATHOGENEPIDEMIOLOGY {
 
     def ch_wgs_bam_s      = aligned_s.aligned.filter { meta, _bam -> meta.library_strategy == 'WGS' }
     // Amplicon BAMs — reserved for the bcftools-based caller (not yet wired)
-    def ch_amplicon_bam_s = aligned_s.aligned.filter { meta, _bam -> meta.library_strategy != 'WGS' }
+    def _ch_amplicon_bam_s = aligned_s.aligned.filter { meta, _bam -> meta.library_strategy != 'WGS' }
 
     def gatk_out = GATK_MOI(
         ch_wgs_bam_s,
         ch_queryfasta,
         ch_queryfai,
-        Channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true),
-        Channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
+        channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true),
+        channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
     )
     def varcalls_s = gatk_out.varcalls_s
 

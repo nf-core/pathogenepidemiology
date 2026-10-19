@@ -14,7 +14,7 @@ include {
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
 include { PHYLOGENY            } from '../subworkflows/local/phylogeny/phylogeny.nf'
-include { HMMIBDRS             } from '../modules/local/hmmibdrs/mainf'
+include { HMMIBDRS             } from '../modules/local/hmmibdrs/main'
 
 
 
@@ -51,11 +51,11 @@ workflow {
 
   // Filter short reads out
   ch_samples_l = ch_reads_clean
-    .join(ch_samples.map { meta, reads, platform -> tuple(meta, platform) }, by: 0)
-    .filter { meta, reads, platform ->
+    .join(ch_samples.map { meta, _reads, platform -> tuple(meta, platform) }, by: 0)
+    .filter { _meta, _reads, platform ->
         platform == 'OXFORD_NANOPORE'
     }
-    .map { meta, reads, platform ->
+    .map { meta, reads, _platform ->
         tuple(meta, reads)
     }
 
@@ -88,11 +88,11 @@ workflow {
 
   // Filter long reads out
   ch_samples_s = ch_reads_clean
-    .join(ch_samples.map { meta, reads, platform -> tuple(meta, platform) }, by: 0)
-    .filter { meta, reads, platform ->
+    .join(ch_samples.map { meta, _reads, platform -> tuple(meta, platform) }, by: 0)
+    .filter { _meta, _reads, platform ->
         (platform == 'ILLUMINA' || platform == 'DNBSEQ')
     }
-    .map { meta, reads, platform ->
+    .map { meta, reads, _platform ->
         tuple(meta, reads)
     }
 
@@ -111,30 +111,30 @@ workflow {
     .map { meta, bam, bai -> tuple(meta, bam, bai) }
 
 
-  ch_wgs_bam_s     = aligned_s.aligned.filter { meta, bam -> meta.library_strategy == 'WGS' }
+  ch_wgs_bam_s     = aligned_s.aligned.filter { meta, _bam -> meta.library_strategy == 'WGS' }
   // Amplicon BAMs — reserved for the bcftools-based caller (not yet wired)
-  ch_amplicon_bam_s = aligned_s.aligned.filter { meta, bam -> meta.library_strategy != 'WGS' }
+  _ch_amplicon_bam_s = aligned_s.aligned.filter { meta, _bam -> meta.library_strategy != 'WGS' }
 
   varcalls_s = GATK_MOI(
     ch_wgs_bam_s,
     ch_queryfasta,
     ch_queryfai,
     // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
-    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),
-    Channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
+    channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),
+    channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
   ).varcalls_s
 
   // Generate one consensus FASTA per WGS sample from the cohort BCF
-  ch_reference = ch_queryfasta.map { meta, fasta -> fasta }.first()
+  ch_reference = ch_queryfasta.map { _meta, fasta -> fasta }.first()
 
   ch_consensus_input = varcalls_s
-    .combine(ch_wgs_bam_s.map { meta, bam -> meta })
+    .combine(ch_wgs_bam_s.map { meta, _bam -> meta })
     .combine(ch_reference)
-    .map { cohort_meta, bcf, csi, sample_meta, fasta ->
+    .map { _cohort_meta, bcf, csi, sample_meta, fasta ->
         tuple(sample_meta, bcf, csi, fasta, [])
     }
 
-  phylogeny_s = PHYLOGENY(ch_consensus_input)
+  PHYLOGENY(ch_consensus_input)
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
 /*
@@ -168,15 +168,15 @@ workflow {
   ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs.first())
 
   // multiqc
-  ch_multiqc_input = Channel.empty()
+  ch_multiqc_input = channel.empty()
     .mix(
-        ch_fastqc_out.collect { meta, files -> files },
-        ch_bbduk_stats.collect { meta, files -> files },
-        ch_bbduk_logs.collect { meta, files -> files },
-        ch_bbduk_dropped.collect { meta, files -> files },
-        ch_mm2stats.stats.collect { meta, files -> files },
-        ch_bm3stats.stats.collect { meta, files -> files },
-        varcalls_s.collect { meta, files, idx -> files }//,
+        ch_fastqc_out.collect { _meta, files -> files },
+        ch_bbduk_stats.collect { _meta, files -> files },
+        ch_bbduk_logs.collect { _meta, files -> files },
+        ch_bbduk_dropped.collect { _meta, files -> files },
+        ch_mm2stats.stats.collect { _meta, files -> files },
+        ch_bm3stats.stats.collect { _meta, files -> files },
+        varcalls_s.collect { _meta, files, _idx -> files }//,
         // Space for more channels
     )
     .flatten()
