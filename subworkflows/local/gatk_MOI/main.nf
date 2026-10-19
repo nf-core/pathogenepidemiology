@@ -42,9 +42,9 @@ workflow GATK_MOI {
 
     ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
-    ch_fasta_val = ch_queryfasta.map { meta, fasta -> fasta }.first()
-    ch_fai_val = ch_queryfai.map { meta, fai -> fai }.first()
-    ch_dict_val = ch_querydict.map { meta, dict -> dict }.first()
+    ch_fasta_val = ch_queryfasta.map { _meta, fasta -> fasta }.first()
+    ch_fai_val = ch_queryfai.map { _meta, fai -> fai }.first()
+    ch_dict_val = ch_querydict.map { _meta, dict -> dict }.first()
 
 
 
@@ -67,7 +67,7 @@ workflow GATK_MOI {
     ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam.join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
 
     PICARD_COLLECTINSERTSIZEMETRICS(
-        ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam) }
+        ch_dedup_bam.map { meta, bam, _bai -> tuple(meta, bam) }
     )
 
     ch_mosdepth_input = ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam, bai, core_bed) }
@@ -78,7 +78,7 @@ workflow GATK_MOI {
         [],
     )
 
-    ch_intervals = Channel
+    ch_intervals = channel
         .fromPath("${projectDir}/assets/intervals/core_chr*.list")
         .map { list ->
             def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr')
@@ -136,7 +136,7 @@ workflow GATK_MOI {
 
     ch_raw_vcf = GATK4_GENOTYPEGVCFS.out.vcf
         .join(GATK4_GENOTYPEGVCFS.out.tbi, by: 0)
-        .filter { meta, vcf, tbi -> vcf.size() > 8000 }
+        .filter { _meta, vcf, _tbi -> vcf.size() > 8000 }
 
 
     ch_insert_metrics = PICARD_COLLECTINSERTSIZEMETRICS.out.metrics
@@ -186,7 +186,7 @@ workflow GATK_MOI {
         .collect(flat: false)
         .map { items ->
             def sorted = items.sort { a, b -> (a[0].id - 'chr').toInteger() <=> (b[0].id - 'chr').toInteger() }
-            tuple([id: 'cohort'], sorted.collect { it[1] }, sorted.collect { it[2] })
+            tuple([id: 'cohort'], sorted.collect { item -> item[1] }, sorted.collect { item -> item[2] })
         }
 
     BCFTOOLS_CONCAT(ch_concat_input)

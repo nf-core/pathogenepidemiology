@@ -37,18 +37,23 @@
                     },
                     "deepvariant/callvariants": {
                         "branch": "master",
-                        "git_sha": "4a4ccce52d5a280b0b136ff3ac841607debed92b",
+                        "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
                         "installed_by": ["deepvariant"]
                     },
                     "deepvariant/makeexamples": {
                         "branch": "master",
-                        "git_sha": "4a4ccce52d5a280b0b136ff3ac841607debed92b",
+                        "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
                         "installed_by": ["deepvariant"]
                     },
                     "deepvariant/postprocessvariants": {
                         "branch": "master",
-                        "git_sha": "4a4ccce52d5a280b0b136ff3ac841607debed92b",
+                        "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
                         "installed_by": ["deepvariant"]
+                    },
+                    "deepvariant/rundeepvariant": {
+                        "branch": "master",
+                        "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
+                        "installed_by": ["modules"]
                     },
                     "fastqc": {
                         "branch": "master",
@@ -156,7 +161,7 @@
                 "nf-core": {
                     "deepvariant": {
                         "branch": "master",
-                        "git_sha": "6ef220fd9252b42fb3c50348bbdbcb6246730686",
+                        "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nextflow_pipeline": {

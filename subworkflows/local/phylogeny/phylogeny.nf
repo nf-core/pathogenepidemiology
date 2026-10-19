@@ -14,7 +14,7 @@ workflow PHYLOGENY {
     consensus_s = BCFTOOLS_CONSENSUS(ch_consensus_input).fasta
 
     ch_consensus_multi = consensus_s
-        .map { meta, fasta -> fasta }
+        .map { _meta, fasta -> fasta }
         .collectFile(name: 'consensus.fasta')
 
     mafft_s = MAFFT_ALIGN(

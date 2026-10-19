@@ -12,7 +12,7 @@ workflow PREPROCESS_READS {
     ch_hostfasta // from workflow PREPARE_REFERENCES
 
     main:
-    ch_adapters = Channel.fromPath("${projectDir}/assets/adapters.fa", checkIfExists: true)
+    ch_adapters = channel.fromPath("${projectDir}/assets/adapters.fa", checkIfExists: true)
     ch_reads_raw = ch_samples
 
     // Produce QC reports per sample

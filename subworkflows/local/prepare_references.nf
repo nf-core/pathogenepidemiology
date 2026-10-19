@@ -12,8 +12,8 @@ workflow PREPARE_REFERENCES {
     hosturl
 
     main:
-    ch_queryref = Channel.of(queryurl)
-    ch_hostref  = Channel.of(hosturl)
+    ch_queryref = channel.of(queryurl)
+    ch_hostref  = channel.of(hosturl)
 
 
     ch_query    = DOWNLOAD_QUERYFASTA(ch_queryref).fasta
