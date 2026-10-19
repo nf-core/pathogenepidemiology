@@ -13,6 +13,7 @@ include { BWAMEM3_MEM                          } from '../modules/nf-core/bwamem
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI                             } from '../subworkflows/local/gatk_MOI/main'
+include { PHYLOGENY                            } from '../subworkflows/local/phylogeny/phylogeny.nf'
 include { BCFTOOLS_STATS                       } from '../modules/nf-core/bcftools/stats/main'
 //include { HMMIBDRS                             } from '../modules/local/hmmibdrs/main'
 include { MULTIQC                              } from '../modules/nf-core/multiqc/main'
@@ -137,6 +138,16 @@ workflow PATHOGENEPIDEMIOLOGY {
         channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
     )
     def varcalls_s = gatk_out.varcalls_s
+
+    // Generate one consensus FASTA per WGS sample from the cohort BCF
+    def ch_reference = ch_queryfasta.map { _meta, fasta -> fasta }.first()
+    def ch_consensus_input = varcalls_s
+        .combine(ch_wgs_bam_s.map { meta, _bam -> meta })
+        .combine(ch_reference)
+        .map { cohort_meta, bcf, csi, sample_meta, fasta ->
+            [ sample_meta, bcf, csi, fasta, [] ]
+        }
+    def phylogeny_s = PHYLOGENY(ch_consensus_input)
 
     def ch_bcftools_stats = BCFTOOLS_STATS(
         varcalls_s,        // [meta, bcf, csi]
