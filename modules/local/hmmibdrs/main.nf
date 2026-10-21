@@ -29,7 +29,7 @@ process HMMIBDRS {
         $args \\
         # --num-threads $task.cpus \\
         -o ${prefix}.bam \\
-        $bam
+        $genotypes
     """
 
     stub:
