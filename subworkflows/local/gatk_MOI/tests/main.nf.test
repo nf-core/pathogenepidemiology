@@ -50,6 +50,51 @@ nextflow_workflow {
                 { assert workflow.out.varcalls_s[0][1].endsWith('cohort.bcf.gz') },
                 { assert workflow.out.varcalls_s[0][2].endsWith('cohort.bcf.gz.csi') },
                 {
+                    // Inspect real task inputs, not the empty stub BCF contents.
+                    def lines = new File("${metaDir}/trace.csv").readLines()
+                    def fields = lines.first().split('\t')
+                    def tasks = lines.drop(1).collect { line ->
+                        def values = line.split('\t', -1)
+                        fields.indices.collectEntries { i -> [(fields[i]): values[i]] }
+                    }
+                    def taskDir = { task ->
+                        def parts = task.hash.split('/')
+                        def matches = new File("${workDir}/${parts[0]}").listFiles().findAll { it.name.startsWith(parts[1]) }
+                        assert matches.size() == 1
+                        matches.first()
+                    }
+                    def imports = tasks.findAll { it.name.startsWith('GATK_MOI:GATK4_GENOMICSDBIMPORT ') }
+                    assert imports.size() == 14
+                    assert imports.collect { it.name.tokenize('()').last() }.toSet() == (1..14).collect { "chr${it}".toString() }.toSet()
+                    imports.each { task ->
+                        def chr = task.name.tokenize('()').last()
+                        def dir = taskDir(task)
+                        def vcfs = dir.listFiles().findAll { it.name.endsWith('.vcf.gz') }
+                        assert vcfs.collect { it.name }.toSet() == ['test', 'test2'].collect { "${it}.${chr}.g.vcf.gz".toString() }.toSet()
+                        assert dir.listFiles().count { it.name.endsWith('.vcf.gz.tbi') } == 2
+                        vcfs.each { vcf ->
+                            def index = new File(dir, "${vcf.name}.tbi")
+                            assert index.exists()
+                            assert index.canonicalFile.parentFile == vcf.canonicalFile.parentFile
+                        }
+                    }
+                    assert tasks.count { it.name.startsWith('GATK_MOI:GATK4_HAPLOTYPECALLER ') } == 28
+                    assert tasks.count { it.name.startsWith('GATK_MOI:GATK4_GENOTYPEGVCFS ') } == 14
+                    assert !tasks.any { it.name.contains('VQSR') || it.name.contains('VARRECAL') }
+                    def concat = tasks.findAll { it.name.startsWith('GATK_MOI:BCFTOOLS_CONCAT ') }
+                    assert concat.size() == 1
+                    def dir = taskDir(concat.first())
+                    def vcfs = new File(dir, 'concat-vcfs.txt').readLines()
+                    def indexes = new File(dir, 'concat-indexes.txt').readLines()
+                    // This is channel order only; concat.nf.test separately
+                    // verifies the module's independent lexicographic sort.
+                    assert vcfs == (1..14).collect { "chr${it}.vcf.gz".toString() }
+                    assert indexes == vcfs.collect { "${it}.tbi".toString() }
+                    vcfs.eachWithIndex { name, i ->
+                        assert new File(dir, name).canonicalFile.parentFile == new File(dir, indexes[i]).canonicalFile.parentFile
+                    }
+                },
+                {
                     [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
                         assert channel.size() == 2
                         assert channel.collect { it[0] }.toSet() == [[id: 'test'], [id: 'test2']].toSet()
