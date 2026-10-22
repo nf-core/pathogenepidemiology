@@ -8,6 +8,11 @@ The directories listed below will be created in the results directory after the 
 
 <!-- TODO nf-core: Write this documentation describing your workflow's output -->
 
+In the GATK subworkflow, chromosome VCFs larger than 8000 bytes pass through VQSR.
+VCFs of 8000 bytes or smaller bypass VQSR and contribute **unrecalibrated calls**
+to the cohort alongside completed VQSR outputs. Both retain their indexes and
+are concatenated in numeric chromosome order; small chromosomes are not dropped.
+
 ## Pipeline overview
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:

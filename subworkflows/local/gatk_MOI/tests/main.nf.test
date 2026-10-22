@@ -5,13 +5,17 @@ nextflow_workflow {
     workflow "GATK_MOI"
     options "-stub"
 
-    test("GATK_MOI emits no variant calls when stub VCFs are filtered out") {
+    test("GATK_MOI concatenates small stub VCFs from a two-sample cohort without VQSR") {
         when {
             workflow {
                 """
                 input[0] = Channel.of(
                     tuple(
                         [id: 'test'],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true)
+                    ),
+                    tuple(
+                        [id: 'test2'],
                         file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true)
                     )
                 )
@@ -40,14 +44,19 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                // Stub VCFs are below the size filter, so concat must not emit.
-                { assert workflow.out.varcalls_s.isEmpty() },
+                // Small stub VCFs bypass VQSR, but still produce a cohort.
+                { assert workflow.out.varcalls_s.size() == 1 },
+                { assert workflow.out.varcalls_s[0][0] == [id: 'cohort'] },
+                { assert workflow.out.varcalls_s[0][1].endsWith('cohort.bcf.gz') },
+                { assert workflow.out.varcalls_s[0][2].endsWith('cohort.bcf.gz.csi') },
                 {
                     [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
-                        assert channel.size() == 1
-                        assert channel[0].size() == 2
-                        assert channel[0][0] == [id: 'test']
-                        assert channel[0][1] instanceof String
+                        assert channel.size() == 2
+                        assert channel.collect { it[0] }.toSet() == [[id: 'test'], [id: 'test2']].toSet()
+                        channel.each { entry ->
+                            assert entry.size() == 2
+                            assert entry[1] instanceof String
+                        }
                     }
                 }
             )
