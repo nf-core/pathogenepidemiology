@@ -1,0 +1,52 @@
+nextflow_process {
+    name "Test GATK cohort concat ordering with real bcftools"
+    script "../../../../modules/nf-core/bcftools/concat/main.nf"
+    process "BCFTOOLS_CONCAT"
+    config "./concat.config"
+
+    test("Existing concat filename sort produces an indexed lexical-order cohort") {
+        setup {
+            run("CONCAT_FIXTURE") {
+                script "./concat_fixture.nf"
+                process {
+                    """
+                    input[0] = tuple([id: 'cohort'], true)
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = CONCAT_FIXTURE.out.vcfs.join(CONCAT_FIXTURE.out.indexes, by: 0)
+                    .map { meta, vcfs, indexes ->
+                        def ordered = vcfs.sort { a, b -> a.baseName.tokenize('.')[0].replace('chr', '').toInteger() <=> b.baseName.tokenize('.')[0].replace('chr', '').toInteger() }
+                        tuple(meta, ordered, ordered.collect { vcf -> indexes.find { it.name == vcf.name + '.tbi' } })
+                    }
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.vcf[0][0] == [id: 'cohort'] },
+                { assert new File(process.out.index[0][1].toString()).length() > 0 },
+                {
+                    def dir = new File(process.out.vcf[0][1].toString()).parentFile
+                    def order = (1..14).collect { "chr${it}".toString() }.sort()
+                    // Real bcftools logging, not stub output or inferred staging order.
+                    def observed = new File(dir, '.command.err').readLines()
+                        .findAll { it.startsWith('Concatenating ') }
+                        .collect { it.tokenize()[1] }
+                    assert observed == order.collect { "${it}.vcf.gz".toString() }
+                    def command = new File(dir, '.command.sh').text
+                    def inputLine = command.readLines().find { it.trim().startsWith('chr1.vcf.gz ') }
+                    assert inputLine != null
+                    assert inputLine.trim().tokenize() == order.collect { "${it}.vcf.gz".toString() }
+                }
+            )
+        }
+    }
+}

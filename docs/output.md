@@ -10,8 +10,10 @@ The directories listed below will be created in the results directory after the 
 
 In the GATK subworkflow, chromosome VCFs larger than 8000 bytes pass through VQSR.
 VCFs of 8000 bytes or smaller bypass VQSR and contribute **unrecalibrated calls**
-to the cohort alongside completed VQSR outputs. Both retain their indexes and
-are concatenated in numeric chromosome order; small chromosomes are not dropped.
+to the cohort alongside completed VQSR outputs; small chromosomes are not dropped.
+VCFs remain paired with their indexes. The existing concat module sorts input
+filenames lexicographically (for example, `chr1`, `chr10`, ..., `chr2`), so the
+cohort does not promise numeric chromosome order.
 
 ## Pipeline overview
 
