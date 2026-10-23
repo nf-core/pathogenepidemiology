@@ -134,9 +134,12 @@ workflow GATK_MOI {
         [[:], []],
     )
 
-    ch_raw_vcf = GATK4_GENOTYPEGVCFS.out.vcf
+    ch_vcf_with_index = GATK4_GENOTYPEGVCFS.out.vcf
         .join(GATK4_GENOTYPEGVCFS.out.tbi, by: 0)
-        .filter { _meta, vcf, _tbi -> vcf.size() > 8000 }
+
+    // Preserve the existing VQSR size gate, but retain smaller VCFs unrecalibrated.
+    ch_raw_vcf = ch_vcf_with_index.filter { _meta, vcf, _tbi -> vcf.size() > 8000 }
+    ch_bypass_vcf = ch_vcf_with_index.filter { _meta, vcf, _tbi -> vcf.size() <= 8000 }
 
 
     ch_insert_metrics = PICARD_COLLECTINSERTSIZEMETRICS.out.metrics
@@ -183,6 +186,7 @@ workflow GATK_MOI {
     ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf.join(GATK4_VQSR_SNPS.out.tbi, by: 0)
 
     ch_concat_input = ch_vqsr_output
+        .mix(ch_bypass_vcf)
         .collect(flat: false)
         .map { items ->
             def sorted = items.sort { a, b -> (a[0].id - 'chr').toInteger() <=> (b[0].id - 'chr').toInteger() }

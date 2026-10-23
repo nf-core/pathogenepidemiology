@@ -1,11 +1,10 @@
 nextflow_workflow {
     name "Test Subworkflow GATK_MOI"
     script "../main.nf"
-    config "./nextflow.config"
     workflow "GATK_MOI"
     options "-stub"
 
-    test("GATK_MOI emits no variant calls when stub VCFs are filtered out") {
+    test("GATK_MOI concatenates small stub VCFs without VQSR") {
         when {
             workflow {
                 """
@@ -40,8 +39,11 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                // Stub VCFs are below the size filter, so concat must not emit.
-                { assert workflow.out.varcalls_s.isEmpty() },
+                // Small stub VCFs bypass VQSR, but still produce a cohort.
+                { assert workflow.out.varcalls_s.size() == 1 },
+                { assert workflow.out.varcalls_s[0][0] == [id: 'cohort'] },
+                { assert workflow.out.varcalls_s[0][1].endsWith('cohort.bcf.gz') },
+                { assert workflow.out.varcalls_s[0][2].endsWith('cohort.bcf.gz.csi') },
                 {
                     [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
                         assert channel.size() == 1
