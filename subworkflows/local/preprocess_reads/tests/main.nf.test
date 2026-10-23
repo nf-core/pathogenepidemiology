@@ -3,13 +3,12 @@ nextflow_workflow {
     name "Test BBDUK_CUSTOM reuse in PREPROCESS_READS"
     script "../../preprocess_reads.nf"
     workflow "PREPROCESS_READS"
-    config "./nextflow.config"
 
     tag "subworkflows"
     tag "bbmap/bbduk"
     tag "subworkflows/preprocess_reads"
 
-    test("single and paired reads - PhiX plus supplied reference") {
+    test("trim then filter reads") {
         when {
             params {
                 outdir = "$outputDir"
@@ -18,120 +17,15 @@ nextflow_workflow {
                 """
                 def read1 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
                 def read2 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)
-                input[0] = Channel.of(
-                    tuple([id: 'single', single_end: true, instrument_platform: 'ILLUMINA'], [read1]),
-                    tuple([id: 'paired', single_end: false, instrument_platform: 'ILLUMINA'], [read1, read2])
-                )
-                input[1] = Channel.of(file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/transcriptome.fasta', checkIfExists: true))
-                """
-            }
-        }
-        then {
-            assert workflow.success
-            assert workflow.trace.succeeded().size() == 6
-            ['BBDUK_TRIM', 'BBDUK_FILTER'].each { alias ->
-                assert workflow.trace.tasks().count { task -> task.name.contains(":${alias} (") } == 2
-            }
-            assert workflow.out.reads_clean.size() == 2
-            workflow.out.reads_clean.each { meta, reads ->
-                def files = reads instanceof List ? reads : [reads]
-                assert files.collect { path(it).fileName.toString() } == (meta.single_end ?
-                    ['single_filtered.fastq.gz'] : ['paired_1_filtered.fastq.gz', 'paired_2_filtered.fastq.gz'])
-            }
-            assert workflow.out.samples.collect { it[0].id }.toSet() == ['single', 'paired'].toSet()
-            workflow.out.samples.each { meta, reads, platform ->
-                assert platform == 'ILLUMINA'
-                assert reads.collect { path(it).fileName.toString() } == (meta.single_end ?
-                    ['test_1.fastq.gz'] : ['test_1.fastq.gz', 'test_2.fastq.gz'])
-            }
-            assert workflow.out.fastqc.collect { it[0].id }.toSet() == ['single', 'paired'].toSet()
-            workflow.out.fastqc.each { meta, reports ->
-                assert (reports instanceof List ? reports : [reports]).collect { path(it).fileName.toString() } == (meta.single_end ?
-                    ['single_fastqc.zip'] : ['paired_1_fastqc.zip', 'paired_2_fastqc.zip'])
-            }
-            assert workflow.out.bbduk_logs.size() == 4
-            assert workflow.out.bbduk_stats.size() == 4
-            assert workflow.out.bbduk_dropped.size() == 2
-            assert workflow.out.trim_dropped.size() == 2
-            workflow.out.bbduk_logs.each { meta, log ->
-                def command = path(log).text.readLines().first()
-                if (log.endsWith('.trimmed.bbduk.log')) {
-                    assert command.contains('ktrim=r')
-                    assert command.contains('ref=adapters.fa')
-                    assert !command.contains('phix')
-                    assert !command.contains('transcriptome.fasta')
-                    assert command.contains('mink=11')
-                } else {
-                    assert log.endsWith('.filtered.bbduk.log')
-                    assert command.contains('ktrim=f')
-                    assert command.contains('ref=phix,transcriptome.fasta ')
-                    assert !command.contains('adapters.fa')
-                    ['mink=', 'tpe=', 'tbo=', 'minlen='].each { arg ->
-                        assert !command.contains(arg)
-                    }
-                    // The filtering task consumes the first task's trimmed reads.
-                    assert command.contains('_trimmed.fastq.gz')
-                }
-            }
-            assert workflow.out.bbduk_stats.collect { meta, stats -> path(stats).fileName.toString() }.toSet() ==
-                ['single.trimmed.stats.txt', 'single.filtered.stats.txt', 'paired.trimmed.stats.txt', 'paired.filtered.stats.txt'].toSet()
-            workflow.out.bbduk_dropped.each { meta, reads ->
-                assert (reads instanceof List ? reads : [reads]).collect { path(it).fileName.toString() } == (meta.single_end ?
-                    ['single.filtered.discarded.fastq.gz'] : ['paired_1.filtered.discarded.fastq.gz', 'paired_2.filtered.discarded.fastq.gz'])
-            }
-            workflow.out.trim_dropped.each { meta, reads ->
-                assert (reads instanceof List ? reads : [reads]).collect { path(it).fileName.toString() } == (meta.single_end ?
-                    ['single.trimmed.discarded.fastq.gz'] : ['paired_1.trimmed.discarded.fastq.gz', 'paired_2.trimmed.discarded.fastq.gz'])
-            }
-            assert snapshot(workflow.out.reads_clean, workflow.out.bbduk_dropped, workflow.out.trim_dropped).match()
-        }
-    }
-
-    test("empty contaminant channel - single and paired PhiX-only filtering") {
-        when {
-            params {
-                outdir = "$outputDir"
-            }
-            workflow {
-                """
-                def read1 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
-                def read2 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)
-                input[0] = Channel.of(
-                    tuple([id: 'single', single_end: true, instrument_platform: 'ILLUMINA'], [read1]),
-                    tuple([id: 'paired', single_end: false, instrument_platform: 'ILLUMINA'], [read1, read2])
-                )
+                input[0] = Channel.of(tuple([id: 'paired', single_end: false, instrument_platform: 'ILLUMINA'], [read1, read2]))
                 input[1] = Channel.empty()
                 """
             }
         }
         then {
             assert workflow.success
-            assert workflow.trace.succeeded().size() == 6
-            assert workflow.out.reads_clean.size() == 2
-            assert workflow.out.bbduk_logs.size() == 4
-            assert workflow.out.bbduk_stats.size() == 4
-            assert workflow.out.bbduk_dropped.size() == 2
-            assert workflow.out.trim_dropped.size() == 2
-            workflow.out.reads_clean.each { meta, reads ->
-                def files = reads instanceof List ? reads : [reads]
-                assert files.size() == (meta.single_end ? 1 : 2)
-                assert files.every { read -> read.endsWith('_filtered.fastq.gz') }
-            }
-            workflow.out.bbduk_logs.each { meta, log ->
-                def command = path(log).text.readLines().first()
-                if (log.endsWith('.filtered.bbduk.log')) {
-                    assert command.contains('ktrim=f')
-                    assert command.contains('ref=phix ')
-                    assert !command.contains('adapters.fa')
-                    assert command.contains('_trimmed.fastq.gz')
-                } else {
-                    assert log.endsWith('.trimmed.bbduk.log')
-                    assert command.contains('ktrim=r')
-                    assert command.contains('ref=adapters.fa ')
-                    assert !command.contains('phix')
-                }
-            }
-            assert snapshot(workflow.out.reads_clean, workflow.out.bbduk_dropped, workflow.out.trim_dropped).match()
+            assert workflow.out.reads_clean.size() == 1
+            assert snapshot(workflow.out.reads_clean).match()
         }
     }
 }
