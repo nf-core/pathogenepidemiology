@@ -26,25 +26,6 @@
                     "default": 4,
                     "description": "Number of CPU threads to use per process.",
                     "fa_icon": "fas fa-microchip"
-                },
-                "resource_limit_cpus": {
-                    "type": "integer",
-                    "default": 4,
-                    "minimum": 1,
-                    "description": "Maximum number of CPUs allocated to a process.",
-                    "fa_icon": "fas fa-microchip"
-                },
-                "resource_limit_memory": {
-                    "type": "string",
-                    "default": "8.GB",
-                    "description": "Maximum memory allocated to a process, for example 8.GB.",
-                    "fa_icon": "fas fa-memory"
-                },
-                "resource_limit_time": {
-                    "type": "string",
-                    "default": "24.h",
-                    "description": "Maximum execution time allowed for a process, for example 24.h.",
-                    "fa_icon": "fas fa-clock"
                 }
             }
         },
