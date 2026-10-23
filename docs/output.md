@@ -13,6 +13,7 @@ The directories listed below will be created in the results directory after the 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
 - [FastQC](#fastqc) - Raw read QC
+- [BBDuk](#bbduk) - Separate adapter trimming and contaminant filtering
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
@@ -28,6 +29,25 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 </details>
 
 [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences. For further reading and documentation see the [FastQC help pages](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
+
+### BBDuk
+
+The single local `bbduk_custom` module runs as two distinct tasks,
+`BBDUK_TRIM` followed by `BBDUK_FILTER`.
+
+- `trimmed/`: adapter-trimmed `*_trimmed.fastq.gz`, `*.trimmed.bbduk.log`,
+  `*.trimmed.stats.txt` and `*.trimmed.discarded.fastq.gz`. These rejects failed
+  trimming/length checks; they are **not** contaminant matches.
+- `filtered/`: final `*_filtered.fastq.gz`, `*.filtered.bbduk.log`,
+  `*.filtered.stats.txt` and `*.filtered.discarded.fastq.gz`. Filtering removes whole
+  reads matching PhiX or the supplied host/contaminant reference, rather than
+  trimming them. For paired-end data the default BBDuk pair-removal policy is
+  retained: a matching mate rejects the pair, so a rejected mate need not itself match.
+
+Only filtered reads go to downstream analysis. The preprocessing `bbduk_stats`
+and `bbduk_logs` channels contain both stages with distinct filenames;
+`bbduk_dropped` contains filtering rejects only, and `trim_dropped` contains
+trimming rejects separately.
 
 ### MultiQC
 
