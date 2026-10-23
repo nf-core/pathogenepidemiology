@@ -1,14 +1,15 @@
 nextflow_process {
 
-    name "Test reusable Process BBDUK_CUSTOM (trimming configuration)"
+    name "Test Process BBDUK_CUSTOM"
     script "../main.nf"
     process "BBDUK_CUSTOM"
     config "./nextflow.config"
 
     tag "modules"
+    tag "bbmap"
     tag "bbmap/bbduk"
 
-    test("single-end adapter trimming") {
+    test("sarscov2 - single end fastq - fastq") {
         when {
             process {
                 """
@@ -21,14 +22,23 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert process.out.reads[0][1].endsWith('test.trim_trimmed.fastq.gz')
-            assert path(process.out.log[0][1]).text.contains('Input is being processed as unpaired')
-            assert process.out.discarded[0][1].endsWith('.trimmed.discarded.fastq.gz')
+            assertAll(
+                { assert process.success },
+                {
+                    def log = path(process.out.log[0][1]).text
+                    assert log.contains('Input is being processed as unpaired')
+                    assert log.readLines().first().contains('ktrim=r')
+                    assert log.readLines().first().contains('ref=adapters.fa ')
+                    assert !log.readLines().first().contains('phix')
+                },
+                { assert process.out.discarded[0][1].endsWith('test.trim.trimmed.discarded.fastq.gz') },
+                { assert snapshot(process.out.reads,
+                                  process.out.findAll { key, val -> key.startsWith('versions') }).match() }
+            )
         }
     }
 
-    test("paired-end adapter trimming") {
+    test("sarscov2 - paired end fastq - fastq") {
         when {
             process {
                 """
@@ -42,14 +52,93 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert process.out.reads[0][1].size() == 2
-            assert process.out.discarded[0][1].size() == 2
-            assert path(process.out.log[0][1]).text.contains('Input is being processed as paired')
+            assertAll(
+                { assert process.success },
+                {
+                    def log = path(process.out.log[0][1]).text
+                    assert log.contains('Input is being processed as paired')
+                    assert log.readLines().first().contains('ktrim=r')
+                    assert log.readLines().first().contains('ref=adapters.fa ')
+                    assert !log.readLines().first().contains('phix')
+                },
+                { assert process.out.discarded[0][1].collect { path(it).fileName.toString() } ==
+                    ['test.trim_1.trimmed.discarded.fastq.gz', 'test.trim_2.trimmed.discarded.fastq.gz'] },
+                { assert snapshot(process.out.reads,
+                                  process.out.findAll { key, val -> key.startsWith('versions') }).match() }
+            )
         }
     }
 
-    test("single-end adapter trimming stub") {
+    test("sarscov2 - single end w/ contams [fastq,fasta] - fastq") {
+        config "./filter.config"
+        when {
+            process {
+                """
+                input[0] = [
+                    [id: 'test', single_end: true],
+                    [file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)]
+                ]
+                input[1] = file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/transcriptome.fasta', checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.reads[0][1].endsWith('test.filter_filtered.fastq.gz') },
+                { assert process.out.discarded[0][1].endsWith('test.filter.filtered.discarded.fastq.gz') },
+                {
+                    def log = path(process.out.log[0][1]).text
+                    assert log.contains('Input is being processed as unpaired')
+                    def command = log.readLines().first()
+                    assert command.contains('ktrim=f')
+                    assert command.contains('ref=phix,transcriptome.fasta ')
+                    assert !command.contains('adapters.fa')
+                    assert !command.contains('qtrim=')
+                },
+                { assert snapshot(process.out.reads, process.out.discarded,
+                                  process.out.findAll { key, val -> key.startsWith('versions') }).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - paired end w/ contams [fastq,fasta] - fastq") {
+        config "./filter.config"
+        when {
+            process {
+                """
+                input[0] = [
+                    [id: 'test', single_end: false],
+                    [file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true),
+                     file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)]
+                ]
+                input[1] = file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/transcriptome.fasta', checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.reads[0][1].collect { path(it).fileName.toString() } ==
+                    ['test.filter_1_filtered.fastq.gz', 'test.filter_2_filtered.fastq.gz'] },
+                { assert process.out.discarded[0][1].collect { path(it).fileName.toString() } ==
+                    ['test.filter_1.filtered.discarded.fastq.gz', 'test.filter_2.filtered.discarded.fastq.gz'] },
+                {
+                    def log = path(process.out.log[0][1]).text
+                    assert log.contains('Input is being processed as paired')
+                    def command = log.readLines().first()
+                    assert command.contains('ktrim=f')
+                    assert command.contains('ref=phix,transcriptome.fasta ')
+                    assert !command.contains('adapters.fa')
+                    assert !command.contains('qtrim=')
+                },
+                { assert snapshot(process.out.reads, process.out.discarded,
+                                  process.out.findAll { key, val -> key.startsWith('versions') }).match() }
+            )
+        }
+    }
+
+    test("sarscov2 - single end fastq - fastq - stub") {
         options "-stub"
         when {
             process {
@@ -58,19 +147,21 @@ nextflow_process {
                     [id: 'test', single_end: true],
                     [file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)]
                 ]
-                input[1] = file("${projectDir}/assets/adapters.fa", checkIfExists: true)
+                input[1] = []
                 """
             }
         }
         then {
-            assert process.success
-            assert process.out.reads[0][1].endsWith('test.trim_trimmed.fastq.gz')
-            assert process.out.stats[0][1].endsWith('.trimmed.stats.txt')
-            assert process.out.log[0][1].endsWith('.trimmed.bbduk.log')
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
         }
     }
 
-    test("paired-end adapter trimming stub") {
+    test("sarscov2 - paired end fastq - fastq - stub") {
+        // Exercise the same reusable interface and output contract in filtering mode.
+        config "./filter.config"
         options "-stub"
         when {
             process {
@@ -80,14 +171,15 @@ nextflow_process {
                     [file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true),
                      file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)]
                 ]
-                input[1] = file("${projectDir}/assets/adapters.fa", checkIfExists: true)
+                input[1] = []
                 """
             }
         }
         then {
-            assert process.success
-            assert process.out.reads[0][1].size() == 2
-            assert process.out.discarded[0][1].size() == 2
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
         }
     }
 }
