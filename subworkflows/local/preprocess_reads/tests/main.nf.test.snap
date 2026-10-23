@@ -1,0 +1,146 @@
+{
+    "empty contaminant channel - single and paired PhiX-only filtering": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1_filtered.fastq.gz:md5,e3da014fbb9b428e952c62e8f0fb6402",
+                        "paired_2_filtered.fastq.gz:md5,2ebae722295ea66d84075a3b042e2b42"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single_filtered.fastq.gz:md5,4161df271f9bfcd25d5845a1e220dbec"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1.filtered.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "paired_2.filtered.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single.filtered.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "paired_2.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-23T19:30:26.493775964",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.3"
+        }
+    },
+    "single and paired reads - PhiX plus supplied reference": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "paired_2_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1.filtered.discarded.fastq.gz:md5,e3da014fbb9b428e952c62e8f0fb6402",
+                        "paired_2.filtered.discarded.fastq.gz:md5,2ebae722295ea66d84075a3b042e2b42"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single.filtered.discarded.fastq.gz:md5,4161df271f9bfcd25d5845a1e220dbec"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "paired_2.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "single",
+                        "single_end": true,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    "single.trimmed.discarded.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-23T19:32:23.035274705",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.3"
+        }
+    }
+}
