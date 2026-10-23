@@ -1,0 +1,31 @@
+nextflow_workflow {
+
+    name "Test BBDUK_CUSTOM reuse in PREPROCESS_READS"
+    script "../../preprocess_reads.nf"
+    workflow "PREPROCESS_READS"
+
+    tag "subworkflows"
+    tag "bbmap/bbduk"
+    tag "subworkflows/preprocess_reads"
+
+    test("trim then filter reads") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def read1 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
+                def read2 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)
+                input[0] = Channel.of(tuple([id: 'paired', single_end: false, instrument_platform: 'ILLUMINA'], [read1, read2]))
+                input[1] = Channel.empty()
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.reads_clean.size() == 1
+            assert snapshot(workflow.out.reads_clean).match()
+        }
+    }
+}

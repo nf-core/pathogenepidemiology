@@ -8,6 +8,25 @@
 
 <!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
+### Read preprocessing
+
+Preprocessing invokes the single local `bbduk_custom` module twice under
+distinct aliases, creating two BBDuk tasks per sample: `BBDUK_TRIM` trims against
+`assets/adapters.fa` only (`ktrim=r`), then `BBDUK_FILTER` filters against
+the built-in PhiX reference plus the supplied host reference (`ktrim=f`).
+Adapter-only options (`mink`, `tpe`, `tbo`) and the trimming minimum length
+remain in the first task. Trimming retains its existing arguments. Filtering
+uses `ktrim=f k=31 hdist=0 qhdist=0 speed=0`; compared with the earlier
+two-stage filtering command (`ktrim=f k=23 prealloc=t qhdist=1 speed=2 -da`),
+this changes k-mer length and matching/search settings and removes `prealloc=t`
+and `-da`. The stage split and these filtering parameter changes are distinct
+changes; read retention alone does not establish filtering specificity.
+
+The preprocessing subworkflow accepts an empty contaminant channel or `[]`
+for PhiX-only filtering, or a path/list of paths for additional references.
+The full pipeline still obtains the host reference from `hosturl` as before;
+this change does not introduce a new optional command-line reference parameter.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.

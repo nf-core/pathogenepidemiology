@@ -9,14 +9,13 @@ process BBDUK_CUSTOM {
 
     input:
     tuple val(meta), path(reads)
-    path contaminants
-    path adapters
+    path references
 
     output:
-    tuple val(meta), path('*_trimmed.f*q*'), emit: reads
-    tuple val(meta), path('*.log')     , emit: log
-    tuple val(meta), path('*.discarded.f*q*'), emit: discarded
-    tuple val(meta), path('*.stats.txt'), emit: stats
+    tuple val(meta), path("*_${task.ext.suffix ?: 'trimmed'}.fastq.gz"), emit: reads
+    tuple val(meta), path("*.${task.ext.suffix ?: 'trimmed'}.bbduk.log"), emit: log
+    tuple val(meta), path("*.${task.ext.suffix ?: 'trimmed'}.discarded.fastq.gz"), emit: discarded
+    tuple val(meta), path("*.${task.ext.suffix ?: 'trimmed'}.stats.txt"), emit: stats
     tuple val("${task.process}"), val('bbmap'), eval('bbversion.sh | grep -v "Duplicate cpuset"'), emit: versions_bbmap, topic: versions
 
     when:
@@ -25,33 +24,37 @@ process BBDUK_CUSTOM {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def suffix = task.ext.suffix ?: 'trimmed'
     def raw      = meta.single_end ? "in=${reads[0]}" : "in1=${reads[0]} in2=${reads[1]}"
-    def trimmed  = meta.single_end ? "out=${prefix}_trimmed.fastq.gz" : "out1=${prefix}_1_trimmed.fastq.gz out2=${prefix}_2_trimmed.fastq.gz"
-    def contaminants_fa = contaminants ? "ref=${adapters},phix,${contaminants}" : "ref=${adapters},phix"
-    def discarded = meta.single_end ? "outm=${prefix}.discarded.fastq.gz" : "outm1=${prefix}_1.discarded.fastq.gz outm2=${prefix}_2.discarded.fastq.gz"
-    def stats_file = "stats=${prefix}.stats.txt"
+    def output_reads = meta.single_end ? "out=${prefix}_${suffix}.fastq.gz" : "out1=${prefix}_1_${suffix}.fastq.gz out2=${prefix}_2_${suffix}.fastq.gz"
+    def refs = [task.ext.reference ?: [], references].flatten().findAll { ref -> ref }.join(',')
+    def reference_arg = refs ? "ref=${refs}" : ''
+    // outm holds trimming/length rejects in trimming mode, whole-read matches in filtering mode.
+    // TODO: Evaluate upstream nf-core bbmap/bbduk support for stats and discarded outputs.
+    def discarded = meta.single_end ? "outm=${prefix}.${suffix}.discarded.fastq.gz" : "outm1=${prefix}_1.${suffix}.discarded.fastq.gz outm2=${prefix}_2.${suffix}.discarded.fastq.gz"
     """
     bbduk.sh \\
         -Xmx${task.memory.toGiga()}g \\
         tossbrokenreads=t qin=33 \\
         $raw \\
-        $trimmed \\
+        $output_reads \\
         $discarded \\
-        $stats_file \\
-        $contaminants_fa \\
+        stats=${prefix}.${suffix}.stats.txt \\
+        $reference_arg \\
         $args \\
         threads=$task.cpus \\
-        &> ${prefix}.bbduk.log
+        &> ${prefix}.${suffix}.bbduk.log
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def suffix = task.ext.suffix ?: 'trimmed'
     def output_command = meta.single_end ?
-        "echo '' | gzip > ${prefix}_trimmed.fastq.gz ; echo '' | gzip > ${prefix}.discarded.fastq.gz" :
-        "echo '' | gzip > ${prefix}_1_trimmed.fastq.gz ; echo '' | gzip > ${prefix}_2_trimmed.fastq.gz ; echo '' | gzip > ${prefix}_1.discarded.fastq.gz ; echo '' | gzip > ${prefix}_2.discarded.fastq.gz"
+        "echo '' | gzip > ${prefix}_${suffix}.fastq.gz ; echo '' | gzip > ${prefix}.${suffix}.discarded.fastq.gz" :
+        "echo '' | gzip > ${prefix}_1_${suffix}.fastq.gz ; echo '' | gzip > ${prefix}_2_${suffix}.fastq.gz ; echo '' | gzip > ${prefix}_1.${suffix}.discarded.fastq.gz ; echo '' | gzip > ${prefix}_2.${suffix}.discarded.fastq.gz"
     """
-    touch ${prefix}.bbduk.log
-    touch ${prefix}.stats.txt
+    touch ${prefix}.${suffix}.bbduk.log
+    touch ${prefix}.${suffix}.stats.txt
     $output_command
     """
 }
