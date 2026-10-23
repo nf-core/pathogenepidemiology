@@ -1,9 +1,10 @@
 name: bbmap_bbduk
-description: Adapter and quality trimming of sequencing reads
+description: Reusable BBDuk read trimming or filtering with reference statistics and discarded reads
 keywords:
   - trimming
   - adapter trimming
   - quality trimming
+  - filtering
   - fastq
 tools:
   - bbmap:
@@ -26,10 +27,13 @@ input:
           List of input FastQ files of size 1 and 2 for single-end and paired-end data,
           respectively.
         ontologies: []
-  - contaminants:
+  - references:
       type: file
       description: |
-        Reference files containing adapter and/or contaminant sequences for sequence kmer matching
+        Reference path or list of paths; [] uses only built-in references supplied
+        through task.ext.reference. Configure trimming/filtering mode via task.ext.args.
+        Output naming uses task.ext.suffix (default trimmed) for reads, rejects,
+        logs, and stats.
       ontologies: []
 output:
   reads:
@@ -38,10 +42,10 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.fastq.gz":
+      - "*_${suffix}.fastq.gz":
           type: file
-          description: The trimmed/modified fastq reads
-          pattern: "*fastq.gz"
+          description: Retained reads after trimming or filtering
+          pattern: "*.fastq.gz"
           ontologies:
             - edam: http://edamontology.org/format_3989 # GZIP
   log:
@@ -50,11 +54,25 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.log":
+      - "*.bbduk.log":
           type: file
-          description: Bbduk log file
-          pattern: "*bbduk.log"
+          description: Stage-specific BBDuk log file
+          pattern: "*.bbduk.log"
           ontologies: []
+  discarded:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "*.discarded.fastq.gz":
+          type: file
+          description: Trimming/length rejects in trimming mode or whole-read matches in filtering mode
+  stats:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "*.stats.txt":
+          type: file
+          description: Stage-specific reference match statistics
   versions_bbmap:
     - - "${task.process}":
           type: string
