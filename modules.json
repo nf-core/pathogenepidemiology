@@ -15,6 +15,11 @@
                         "git_sha": "feef37435aea56816adf4b3bde1fc76aac327a8d",
                         "installed_by": ["modules"]
                     },
+                    "bcftools/consensus": {
+                        "branch": "master",
+                        "git_sha": "1ac491b65ad1485da7a9e82e95c3b21e75337885",
+                        "installed_by": ["modules"]
+                    },
                     "bcftools/stats": {
                         "branch": "master",
                         "git_sha": "feef37435aea56816adf4b3bde1fc76aac327a8d",
@@ -98,6 +103,16 @@
                     "gatk4/variantrecalibrator": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "iqtree": {
+                        "branch": "master",
+                        "git_sha": "fb60d28393f3c278daecbd276e7d8cd502689a8b",
+                        "installed_by": ["modules"]
+                    },
+                    "mafft/align": {
+                        "branch": "master",
+                        "git_sha": "e3307865b7a10f4bc458189a494a05c0ca9da52e",
                         "installed_by": ["modules"]
                     },
                     "minimap2/align": {

@@ -14,8 +14,7 @@ include {
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
 include { PHYLOGENY            } from '../subworkflows/local/phylogeny/phylogeny.nf'
-include { HMMIBDRS             } from '../modules/local/hmmibdrs/main'
-
+include { HMMIBDRS } from '../modules/local/hmmibdrs/main'
 
 
 
@@ -124,7 +123,8 @@ workflow {
     channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
   ).varcalls_s
 
-  // Generate one consensus FASTA per WGS sample from the cohort BCF
+
+    // Generate one consensus FASTA per WGS sample from the cohort BCF
   ch_reference = ch_queryfasta.map { _meta, fasta -> fasta }.first()
 
   ch_consensus_input = varcalls_s
