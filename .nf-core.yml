@@ -1,8 +1,11 @@
-lint: {}
-nf_core_version: 4.1.0
+lint:
+  files_unchanged:
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/branch.yml
+nf_core_version: 4.2.0
 repository_type: pipeline
 template:
-  author: Igiraneza Clement, Bilal Asser, Firas Zemzem, more tbc
+  author: Igiraneza Clement, Bilal Asser, Firas Zemzem
   description: A profile-based pipeline for genomic epidemiological analysis of predefined
     pathogens.
   force: false
