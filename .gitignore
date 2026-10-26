@@ -8,14 +8,11 @@ testing*
 *.pyc
 null/
 .lineage/
-<<<<<<< HEAD
 refs
 *contrib*
 #nf-test.config
 *log*
 .nf-test
 local_lint.sh
-=======
 .nf-test/
 .nf-test.log
->>>>>>> TEMPLATE
