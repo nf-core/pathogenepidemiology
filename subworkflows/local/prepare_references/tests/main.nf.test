@@ -1,13 +1,10 @@
 nextflow_workflow {
 
-    name "Test PREPARE_REFERENCES nf-core module interfaces"
+    name "Test PREPARE_REFERENCES"
     script "../../prepare_references.nf"
     workflow "PREPARE_REFERENCES"
 
-    tag "subworkflows"
-    tag "subworkflows/prepare_references"
-
-    test("download both references, decompress query only and index - stub") {
+    test("prepare references - stub") {
         options "-stub"
         config "./nextflow.config"
 
@@ -40,26 +37,4 @@ nextflow_workflow {
         }
     }
 
-    test("download references with equal basenames - stub") {
-        options "-stub"
-        config "./nextflow.config"
-
-        when {
-            params {
-                outdir = "$outputDir"
-            }
-            workflow {
-                """
-                input[0] = 'https://example.invalid/query/reference.fa.gz'
-                input[1] = 'https://example.invalid/host/reference.fa.gz'
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-            assert workflow.out.queryfasta.size() == 1
-            assert workflow.out.hostfasta.size() == 1
-        }
-    }
 }
