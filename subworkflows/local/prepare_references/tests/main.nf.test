@@ -40,7 +40,7 @@ nextflow_workflow {
         }
     }
 
-    test("reject equal download basenames before publishing - stub") {
+    test("download references with equal basenames - stub") {
         options "-stub"
         config "./nextflow.config"
 
@@ -57,9 +57,9 @@ nextflow_workflow {
         }
 
         then {
-            assert workflow.failed
-            assert workflow.stdout.any { it.contains('Query and host reference filenames conflict') }
-            assert !file("$outputDir/download").exists()
+            assert workflow.success
+            assert workflow.out.queryfasta.size() == 1
+            assert workflow.out.hostfasta.size() == 1
         }
     }
 }
