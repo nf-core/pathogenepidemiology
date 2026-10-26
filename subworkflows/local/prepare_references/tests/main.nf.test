@@ -1,0 +1,65 @@
+nextflow_workflow {
+
+    name "Test PREPARE_REFERENCES nf-core module interfaces"
+    script "../../prepare_references.nf"
+    workflow "PREPARE_REFERENCES"
+
+    tag "subworkflows"
+    tag "subworkflows/prepare_references"
+
+    test("download both references, decompress query only and index - stub") {
+        options "-stub"
+        config "./nextflow.config"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = 'https://example.invalid/host.fa.gz'
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.queryfasta.size() == 1
+            assert workflow.out.queryfasta[0][0] == [id: 'query']
+            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
+            assert workflow.out.queryfai.size() == 1
+            assert workflow.out.queryfai[0][0] == [id: 'query']
+            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
+            assert workflow.out.hostfasta.size() == 1
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
+            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai'].each { name ->
+                assert file("$outputDir/download/$name").exists()
+            }
+            assert !file("$outputDir/download/host.fa").exists()
+        }
+    }
+
+    test("reject equal download basenames before publishing - stub") {
+        options "-stub"
+        config "./nextflow.config"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/query/reference.fa.gz'
+                input[1] = 'https://example.invalid/host/reference.fa.gz'
+                """
+            }
+        }
+
+        then {
+            assert workflow.failed
+            assert workflow.stdout.any { it.contains('Query and host reference filenames conflict') }
+            assert !file("$outputDir/download").exists()
+        }
+    }
+}

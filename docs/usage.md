@@ -27,6 +27,13 @@ for PhiX-only filtering, or a path/list of paths for additional references.
 The full pipeline still obtains the host reference from `hosturl` as before;
 this change does not introduce a new optional command-line reference parameter.
 
+Reference downloads use the pinned nf-core WGET module; the query reference is
+decompressed with nf-core GUNZIP and indexed with SAMTOOLS_FAIDX. The host
+reference remains compressed for preprocessing. Downloads, the decompressed
+query and its index are published under `<outdir>/download`; tasks consume
+output channels rather than published copies. Query and host URLs must have
+distinct basenames that do not collide with the decompressed query or its index.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
