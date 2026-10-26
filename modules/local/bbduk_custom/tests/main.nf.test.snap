@@ -23,14 +23,32 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:20:50.378223974",
+        "timestamp": "2026-10-23T19:29:09.475141373",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     },
     "sarscov2 - single end w/ contams [fastq,fasta] - fastq": {
         "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true
+                    },
+                    "test.filter_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true
+                    },
+                    "test.filter.filtered.discarded.fastq.gz:md5,4161df271f9bfcd25d5845a1e220dbec"
+                ]
+            ],
             {
                 "versions_bbmap": [
                     [
@@ -41,14 +59,38 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:21:15.365022211",
+        "timestamp": "2026-10-23T19:29:19.741065165",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     },
     "sarscov2 - paired end w/ contams [fastq,fasta] - fastq": {
         "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": false
+                    },
+                    [
+                        "test.filter_1_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.filter_2_filtered.fastq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": false
+                    },
+                    [
+                        "test.filter_1.filtered.discarded.fastq.gz:md5,4161df271f9bfcd25d5845a1e220dbec",
+                        "test.filter_2.filtered.discarded.fastq.gz:md5,2ebae722295ea66d84075a3b042e2b42"
+                    ]
+                ]
+            ],
             {
                 "versions_bbmap": [
                     [
@@ -59,10 +101,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:21:39.974229912",
+        "timestamp": "2026-10-23T19:29:29.708755605",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     },
     "sarscov2 - paired end fastq - fastq - stub": {
@@ -75,8 +117,8 @@
                             "single_end": false
                         },
                         [
-                            "test.trim_1_trimmed.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
-                            "test.trim_2_trimmed.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                            "test.filter_1_filtered.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                            "test.filter_2_filtered.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                         ]
                     ]
                 ],
@@ -86,7 +128,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.trim.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.filter.filtered.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "2": [
@@ -96,8 +138,8 @@
                             "single_end": false
                         },
                         [
-                            "test.trim_1.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
-                            "test.trim_2.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                            "test.filter_1.filtered.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                            "test.filter_2.filtered.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                         ]
                     ]
                 ],
@@ -107,7 +149,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.trim.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.filter.filtered.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "4": [
@@ -124,8 +166,8 @@
                             "single_end": false
                         },
                         [
-                            "test.trim_1.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
-                            "test.trim_2.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                            "test.filter_1.filtered.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                            "test.filter_2.filtered.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                         ]
                     ]
                 ],
@@ -135,7 +177,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.trim.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.filter.filtered.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "reads": [
@@ -145,8 +187,8 @@
                             "single_end": false
                         },
                         [
-                            "test.trim_1_trimmed.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
-                            "test.trim_2_trimmed.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                            "test.filter_1_filtered.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940",
+                            "test.filter_2_filtered.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                         ]
                     ]
                 ],
@@ -156,7 +198,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.trim.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.filter.filtered.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "versions_bbmap": [
@@ -168,10 +210,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:22:33.540293869",
+        "timestamp": "2026-10-23T19:29:49.921553056",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     },
     "sarscov2 - single end fastq - fastq - stub": {
@@ -192,7 +234,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.trim.trimmed.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "2": [
@@ -201,7 +243,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                        "test.trim.trimmed.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                     ]
                 ],
                 "3": [
@@ -210,7 +252,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.trim.trimmed.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "4": [
@@ -226,7 +268,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                        "test.trim.trimmed.discarded.fastq.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
                     ]
                 ],
                 "log": [
@@ -235,7 +277,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.trim.trimmed.bbduk.log:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "reads": [
@@ -253,7 +295,7 @@
                             "id": "test",
                             "single_end": true
                         },
-                        "test.trim.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.trim.trimmed.stats.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "versions_bbmap": [
@@ -265,10 +307,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:22:07.114041386",
+        "timestamp": "2026-10-23T19:29:39.56186071",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     },
     "sarscov2 - single end fastq - fastq": {
@@ -292,10 +334,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-09-29T16:20:30.173067536",
+        "timestamp": "2026-10-23T19:28:58.687433784",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     }
 }

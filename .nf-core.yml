@@ -10,7 +10,7 @@ template:
     pathogens.
   force: false
   is_nfcore: true
-  name: nf-core/pathogenepidemiology
+  name: pathogenepidemiology
   org: nf-core
   outdir: .
   version: 0.1.0dev
