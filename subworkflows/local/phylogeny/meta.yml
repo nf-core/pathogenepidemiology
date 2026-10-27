@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: phylogeny
+description: Generate consensus sequences, align them with MAFFT and infer a phylogeny with IQ-TREE.
+keywords:
+  - consensus
+  - alignment
+  - phylogeny
+components:
+  - bcftools/consensus
+  - mafft/align
+  - iqtree
+input:
+  - ch_consensus_input:
+      description: "Variant calls, index, reference and optional mask. Structure: [ val(meta), path(vcf), path(tbi), path(fasta), path(mask) ]"
+output:
+  - phylogeny:
+      description: "IQ-TREE tree files for the cohort alignment. Structure: [ val(meta), path(treefile) ]"
+authors: []

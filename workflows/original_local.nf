@@ -1,6 +1,6 @@
 
-include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references.nf'
-include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads.nf'
+include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references'
+include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads'
 include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main'
 include { MULTIQC              } from '../modules/nf-core/multiqc/main'
@@ -13,7 +13,7 @@ include {
   SAMTOOLS_STATS as SAMTOOLS_STATS_BM3
   } from '../modules/nf-core/samtools/stats/main'
 include { GATK_MOI             } from '../subworkflows/local/gatk_MOI'
-include { PHYLOGENY            } from '../subworkflows/local/phylogeny/phylogeny.nf'
+include { PHYLOGENY            } from '../subworkflows/local/phylogeny'
 include { HMMIBDRS } from '../modules/local/hmmibdrs/main'
 
 

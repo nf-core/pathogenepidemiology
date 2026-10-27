@@ -5,15 +5,15 @@
 */
 
 include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references'
-include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads.nf'
+include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads'
 include { MINIMAP2_INDEX                       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN                       } from '../modules/nf-core/minimap2/align/main'
 include { BWAMEM3_INDEX                        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM                          } from '../modules/nf-core/bwamem3/mem/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
-include { GATK_MOI                             } from '../subworkflows/local/gatk_MOI/main'
-include { PHYLOGENY                            } from '../subworkflows/local/phylogeny/phylogeny.nf'
+include { GATK_MOI                             } from '../subworkflows/local/gatk_MOI'
+include { PHYLOGENY                            } from '../subworkflows/local/phylogeny'
 include { BCFTOOLS_STATS                       } from '../modules/nf-core/bcftools/stats/main'
 //include { HMMIBDRS                             } from '../modules/local/hmmibdrs/main'
 include { MULTIQC                              } from '../modules/nf-core/multiqc/main'

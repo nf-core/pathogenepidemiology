@@ -1,7 +1,7 @@
 nextflow_workflow {
 
     name "Test PREPARE_REFERENCES"
-    script "../../prepare_references.nf"
+    script "../main.nf"
     workflow "PREPARE_REFERENCES"
 
     test("prepare references - stub") {

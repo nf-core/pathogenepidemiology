@@ -1,7 +1,7 @@
-include { WGET as DOWNLOAD_QUERYFASTA } from '../../modules/nf-core/wget/main'
-include { WGET as DOWNLOAD_HOSTFASTA  } from '../../modules/nf-core/wget/main'
-include { GUNZIP as GUNZIP_QUERYFASTA } from '../../modules/nf-core/gunzip/main'
-include { SAMTOOLS_FAIDX } from '../../modules/nf-core/samtools/faidx/main'
+include { WGET as DOWNLOAD_QUERYFASTA } from '../../../modules/nf-core/wget/main'
+include { WGET as DOWNLOAD_HOSTFASTA  } from '../../../modules/nf-core/wget/main'
+include { GUNZIP as GUNZIP_QUERYFASTA } from '../../../modules/nf-core/gunzip/main'
+include { SAMTOOLS_FAIDX } from '../../../modules/nf-core/samtools/faidx/main'
 
 // WGET takes metadata, an explicit URL (part of the task cache key), and a suffix.
 def referenceUriToTuple(url) {
