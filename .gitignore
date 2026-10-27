@@ -10,3 +10,9 @@ null/
 .lineage/
 .nf-test/
 .nf-test.log
+refs
+*contrib*
+#nf-test.config
+*log*
+.nf-test
+local_lint.sh
