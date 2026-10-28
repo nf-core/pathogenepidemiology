@@ -1,0 +1,49 @@
+nextflow_workflow {
+    name 'Reference sources remain reusable values (fakes and stubs only)'
+    script './main.nf'
+    workflow 'REFERENCE_VALUES'
+    config './nextflow.config'
+    options '-stub'
+
+    test('host present: downloaded FASTA, FAI and dictionary are reused for both samples') {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = 'https://example.invalid/host.fa.gz'
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.queryfasta[0][0] == [id: 'query']
+            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
+            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
+            assert file(workflow.out.querydict[0][1]).name == 'query.dict'
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
+            assert workflow.trace.tasks().count { it.name.contains('DOWNLOAD_HOSTFASTA') } == 1
+        }
+    }
+
+    test('host absent: reusable empty path value skips host download without dropping samples') {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = null
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.hostfasta == [[]]
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:no-host\n" }
+            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_HOSTFASTA') }
+        }
+    }
+}

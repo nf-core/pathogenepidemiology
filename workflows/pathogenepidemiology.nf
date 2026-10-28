@@ -4,7 +4,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references'
+include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references.nf'
+include { PREPARE_INTERVALS                    } from '../subworkflows/local/prepare_intervals/main'
 include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads.nf'
 include { MINIMAP2_INDEX                       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN                       } from '../modules/nf-core/minimap2/align/main'
@@ -49,6 +50,8 @@ workflow PATHOGENEPIDEMIOLOGY {
         params.queryurl,
         params.hosturl
     )
+    PREPARE_INTERVALS(params.intervals, PREPARE_REFERENCES.out.queryfasta,
+        PREPARE_REFERENCES.out.queryfai, PREPARE_REFERENCES.out.querydict)
     def ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
     def ch_hostfasta  = PREPARE_REFERENCES.out.hostfasta
     def ch_queryfai   = PREPARE_REFERENCES.out.queryfai
@@ -84,10 +87,10 @@ workflow PATHOGENEPIDEMIOLOGY {
         .map { meta, reads, _platform -> [ meta, reads ] }
 
     // Alignment of long reads
-    def minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
+    def minimap2_index = MINIMAP2_INDEX(ch_queryfasta).index
     def aligned_l = MINIMAP2_ALIGN(
         ch_samples_l,
-        minimap2_index.index.first(),   // reference as tuple
+        minimap2_index,                 // reusable reference tuple
         true,                           // bam_format
         'bai',                          // bam_index_extension
         false,                          // cigar_paf_format
@@ -113,11 +116,11 @@ workflow PATHOGENEPIDEMIOLOGY {
         .map { meta, reads, _platform -> [ meta, reads ] }
 
     // Alignment of short reads
-    def bwamem3_index = BWAMEM3_INDEX(ch_queryfasta)
+    def bwamem3_index = BWAMEM3_INDEX(ch_queryfasta).index
     def aligned_s = BWAMEM3_MEM(
         ch_samples_s,
-        bwamem3_index.index.first(),
-        ch_queryfasta.first(),
+        bwamem3_index,
+        ch_queryfasta,
         true                            // sort the bam for gatk
     )
 
@@ -134,13 +137,15 @@ workflow PATHOGENEPIDEMIOLOGY {
         ch_wgs_bam_s,
         ch_queryfasta,
         ch_queryfai,
-        channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true),
-        channel.fromPath("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
+        channel.value(file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)),
+        channel.value(file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)),
+        PREPARE_INTERVALS.out.core_bed,
+        PREPARE_INTERVALS.out.intervals
     )
     def varcalls_s = gatk_out.varcalls_s
 
     // Generate one consensus FASTA per WGS sample from the cohort BCF
-    def ch_reference = ch_queryfasta.map { _meta, fasta -> fasta }.first()
+    def ch_reference = ch_queryfasta.map { _meta, fasta -> fasta }
     def ch_consensus_input = varcalls_s
         .combine(ch_wgs_bam_s.map { meta, _bam -> meta })
         .combine(ch_reference)
@@ -185,11 +190,10 @@ workflow PATHOGENEPIDEMIOLOGY {
 
     // samtools stats reference: tuple val(meta2), path(fasta), path(fai)
     def statsrefs = ch_queryfasta
-        .join(ch_queryfai, by: 0)
-        .map { meta, ref, fai -> [ meta, ref, fai ] }
+        .map { meta, fasta -> tuple(meta, fasta, ch_queryfai.val[1]) }
 
-    def ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs.first())
-    def ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs.first())
+    def ch_mm2stats = SAMTOOLS_STATS_MM2(ch_mm2stats_input, statsrefs)
+    def ch_bm3stats = SAMTOOLS_STATS_BM3(ch_bm3stats_input, statsrefs)
 
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_mm2stats.stats.map { _meta, files -> files },

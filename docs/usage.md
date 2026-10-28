@@ -27,6 +27,20 @@ for PhiX-only filtering, or a path/list of paths for additional references.
 The full pipeline still obtains the host reference from `hosturl` as before;
 this change does not introduce a new optional command-line reference parameter.
 
+### Intervals
+
+Use the optional `--intervals` parameter to select a BED for core-read filtering,
+coverage and variant calling. It defaults to `assets/Pf3D7_core.bed`. The same
+BED is used for core regions and split by contig for variant-calling scatter.
+
+```bash
+nextflow run main.nf --intervals /path/selected.bed
+```
+
+Provide one local, uncompressed `.bed` file whose contigs and coordinates match
+the query reference. Its basename must start with a letter, digit or underscore
+and contain only letters, digits, dots, underscores and hyphens.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.

@@ -1,0 +1,34 @@
+nextflow_workflow {
+    name 'Filename ordering through actual concat script'
+    script './concat.nf'
+    workflow 'INTERVAL_CONCAT'
+    config './concat.config'
+
+    test('reversed BED, arbitrary reference order, mixed suffixes and indexes') {
+        when {
+            workflow {
+                """
+                def contigs = ['zeta', 'chr10', 'alpha', 'chr2', 'beta', 'omega', 'gamma', 'chr1', 'psi', 'delta', 'kappa', 'epsilon']
+                def bed = file('${outputDir}/reversed.bed')
+                bed.text = contigs.reverse().collect { it + '\\t0\\t1\\n' }.join('')
+                def fai = file('${outputDir}/query.fai')
+                file('${outputDir}/query.fa').text = '>synthetic\\nA\\n'
+                file('${outputDir}/query.dict').text = '@HD\\tVN:1.6\\n'
+                file('${outputDir}/query.fa.fai').text = 'synthetic\\t1\\t0\\t1\\t2\\n'
+                fai.text = contigs.collect { it + '\\t100\\t0\\t100\\t101\\n' }.join('')
+                input[0] = bed.toString()
+                input[1] = fai
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def rows = file(workflow.out.vcf[0][1]).readLines().collect { it.split('\t') }
+            assert rows.collect { it[1] } == ['alpha', 'beta', 'chr1', 'chr10', 'chr2', 'delta', 'epsilon', 'gamma', 'kappa', 'omega', 'psi', 'zeta']
+            assert rows.every { it[0] == "${it[1]}.vcf.gz" || it[0] == "${it[1]}.snp.recal.vcf.gz" }
+            assert rows.collect { it[0] } == rows.collect { it[0] }.sort()
+            assert rows.any { it[0].contains('.snp.recal.') }
+            assert rows.any { !it[0].contains('.snp.recal.') }
+        }
+    }
+}
