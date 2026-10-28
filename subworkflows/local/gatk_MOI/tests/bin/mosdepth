@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-[[ "$*" == --version ]] || exit 30
-echo 'mosdepth 0.0.0'

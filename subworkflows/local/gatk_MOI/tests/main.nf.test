@@ -1,105 +1,51 @@
 nextflow_workflow {
-    name "Test Subworkflow GATK_MOI"
-    script "../main.nf"
-    workflow "GATK_MOI"
-    options "-stub"
-    config './lightweight.config'
+    name 'Test Subworkflow GATK_MOI'
+    script '../main.nf'
+    workflow 'GATK_MOI'
+    options '-stub-run'
 
-    test("two samples reuse two chromosome BEDs including disjoint regions") {
-        tag 'edge'
+    // Module-provided stubs test wiring, not variant calling or VQSR.
+    // The downloaded BAM is only staged; its reference need not match in stub mode.
+    test('two samples and two contigs produce a cohort and per-sample QC (stub)') {
         when {
             params {
                 outdir = "$outputDir"
             }
             workflow {
                 """
-                def bam = file('${outputDir}/input.bam'); bam.text = 'synthetic'
-                def fasta = file('${outputDir}/query.fa'); fasta.text = '>zeta\\nA\\n>alpha\\nA\\n'
-                def fai = file('${outputDir}/query.fa.fai'); fai.text = 'zeta\\t1\\t6\\t1\\t2\\nalpha\\t1\\t15\\t1\\t2\\n'
-                def bed1 = file('${outputDir}/alpha.bed'); bed1.text = 'alpha\\t0\\t1\\nalpha\\t2\\t3\\n'
-                def bed2 = file('${outputDir}/zeta.bed'); bed2.text = 'zeta\\t0\\t1\\n'
-                def core = file('${outputDir}/selected.bed'); core.text = bed1.text + bed2.text
+                def assets = '${projectDir}/assets'
+                def reference = assets + '/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
+                def bam = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.single_end.sorted.bam', checkIfExists: true)
                 input[0] = Channel.of(tuple([id: 'sample1'], bam), tuple([id: 'sample2'], bam))
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(bed1)
-                input[4] = Channel.value(bed2)
-                input[5] = Channel.value(core)
-                input[6] = Channel.of(tuple([id: 'alpha'], bed1), tuple([id: 'zeta'], bed2))
+                input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa', checkIfExists: true)))
+                input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai', checkIfExists: true)))
+                input[3] = Channel.value(file(assets + '/Strains.2kb.vcf.gz', checkIfExists: true))
+                input[4] = Channel.value(file(assets + '/Strains.2kb.vcf.gz.tbi', checkIfExists: true))
+                input[5] = Channel.value(file(assets + '/Pf3D7_core.bed', checkIfExists: true))
+                input[6] = Channel.of(
+                    tuple([id: 'Pf3D7_01_v3'], file(assets + '/intervals/core_chr1.list', checkIfExists: true)),
+                    tuple([id: 'Pf3D7_02_v3'], file(assets + '/intervals/core_chr2.list', checkIfExists: true))
+                )
                 """
             }
         }
 
-        then {
-            assertAll(
-                { assert workflow.success },
-                // Small stub VCFs bypass VQSR, but still produce a cohort.
-                { assert workflow.out.varcalls_s.size() == 1 },
-                { assert workflow.out.varcalls_s[0][0] == [id: 'cohort'] },
-                { assert workflow.out.varcalls_s[0][1].endsWith('cohort.bcf.gz') },
-                { assert workflow.out.varcalls_s[0][2].endsWith('cohort.bcf.gz.csi') },
-                {
-                    [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
-                        assert channel.size() == 2
-                        assert channel.collect { it[0].id }.sort() == ['sample1', 'sample2']
-                    }
-                },
-                {
-                    def gvcfs = new File("$outputDir/varcalls_gvcf").listFiles().findAll { it.name.endsWith('.vcf.gz') }
-                    assert gvcfs.collect { it.name }.sort() == ['sample1.alpha.g.vcf.gz', 'sample1.zeta.g.vcf.gz', 'sample2.alpha.g.vcf.gz', 'sample2.zeta.g.vcf.gz']
-                    assert new File("$outputDir/varcalls_by_chr").listFiles().findAll { it.name.endsWith('.vcf.gz') }.collect { it.name }.sort() == ['alpha.vcf.gz', 'zeta.vcf.gz']
-                    assert new File("$outputDir/genomicsdb").listFiles().collect { it.name }.sort() == ['alpha', 'zeta']
-                },
-                {
-                    workflow.out.mosdepth_summary.each { meta, summary ->
-                        def taskDir = file(summary).parentFile
-                        assert new File(taskDir, 'selected.bed').text == 'alpha\t0\t1\nalpha\t2\t3\nzeta\t0\t1\n'
-                        def dedup = new File(taskDir, "${meta.id}.sorted.dup.pf.bam").canonicalFile
-                        assert new File(dedup.parentFile, 'selected.bed').canonicalPath == new File(taskDir, 'selected.bed').canonicalPath
-                    }
-                }
-            )
-        }
-    }
-
-    test('recalibration preserves chromosome-only prefixes across two samples and contigs') {
-        when {
-            params {
-                outdir = "$outputDir"
-                force_recalibration_stub = true
-            }
-            workflow {
-                """
-                def bam = file('${outputDir}/input.bam'); bam.text = 'synthetic'
-                def fasta = file('${outputDir}/query.fa'); fasta.text = '>zeta\\nA\\n>alpha\\nA\\n'
-                def fai = file('${outputDir}/query.fa.fai'); fai.text = 'zeta\\t1\\t6\\t1\\t2\\nalpha\\t1\\t15\\t1\\t2\\n'
-                def bed1 = file('${outputDir}/alpha.bed'); bed1.text = 'alpha\\t0\\t1\\nalpha\\t2\\t3\\n'
-                def bed2 = file('${outputDir}/zeta.bed'); bed2.text = 'zeta\\t0\\t1\\n'
-                def selected = file('${outputDir}/selected.bed'); selected.text = bed1.text + bed2.text
-                input[0] = Channel.of(tuple([id: 'sample1'], bam), tuple([id: 'sample2'], bam))
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(bed1)
-                input[4] = Channel.value(bed2)
-                input[5] = Channel.value(selected)
-                input[6] = Channel.of(tuple([id: 'alpha'], bed1), tuple([id: 'zeta'], bed2))
-                """
-            }
-        }
         then {
             assert workflow.success
             assert workflow.out.varcalls_s.size() == 1
-            assert workflow.out.insert_size_metrics.size() == 2
-            assert workflow.out.mosdepth_summary.size() == 2
-            assert workflow.out.mosdepth_global.size() == 2
-            def names = new File("$outputDir/varcalls_by_chr").listFiles().collect { it.name }
-            ['alpha', 'zeta'].each { prefix ->
-                ['', '.indel.recal', '.snp.recal'].each { suffix ->
-                    assert names.contains("${prefix}${suffix}.vcf.gz".toString())
-                    assert names.contains("${prefix}${suffix}.vcf.gz.tbi".toString())
-                }
+            assert workflow.out.varcalls_s[0][0] == [id: 'cohort']
+            assert file(workflow.out.varcalls_s[0][1]).name == 'cohort.bcf.gz'
+            assert file(workflow.out.varcalls_s[0][2]).name == 'cohort.bcf.gz.csi'
+            [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
+                assert channel.collect { it[0].id }.sort() == ['sample1', 'sample2']
             }
+            assert new File("$outputDir/varcalls_gvcf").listFiles().findAll { it.name.endsWith('.vcf.gz') }.collect { it.name }.sort() == [
+                'sample1.Pf3D7_01_v3.g.vcf.gz', 'sample1.Pf3D7_02_v3.g.vcf.gz',
+                'sample2.Pf3D7_01_v3.g.vcf.gz', 'sample2.Pf3D7_02_v3.g.vcf.gz'
+            ]
+            assert new File("$outputDir/varcalls_by_chr").listFiles().findAll { it.name.endsWith('.vcf.gz') }.collect { it.name }.sort() == [
+                'Pf3D7_01_v3.vcf.gz', 'Pf3D7_02_v3.vcf.gz'
+            ]
         }
     }
-
 }

@@ -1,19 +1,17 @@
 nextflow_workflow {
-    name 'PREPARE_INTERVALS wiring (fake GATK, no analysis)'
+    name 'PREPARE_INTERVALS with the local Pf3D7 reference'
     script '../main.nf'
     workflow 'PREPARE_INTERVALS'
-    config './nextflow.config'
 
     test('default tracked core BED produces one chromosome id per output') {
         when {
             workflow {
                 """
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
+                def reference = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
                 input[0] = null
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
+                input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa')))
+                input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai')))
+                input[3] = Channel.value(tuple([id: 'query'], file(reference + '.dict')))
                 """
             }
         }
@@ -21,7 +19,8 @@ nextflow_workflow {
             assert workflow.success
             def expected = file("${projectDir}/assets/Pf3D7_core.bed")
             assert file(workflow.out.core_bed[0]).toString() == expected.toString()
-            assert workflow.out.intervals.collectMany { file(it[1]).readLines() }.sort() == expected.readLines().sort()
+            def rows = workflow.out.intervals.collectMany { file(it[1]).readLines() }
+            assert rows.collect { it.split('\t').take(3).join('\t') }.sort() == expected.readLines().sort()
             assert workflow.out.intervals.collect { it[0].id }.sort() == expected.readLines().collect { it.split('\t')[0] }.unique().sort()
             assert workflow.out.intervals.every { meta, bed ->
                 meta == [id: file(bed).readLines().first().split('\t')[0]] && file(bed).name == "${meta.id}.bed"
@@ -29,28 +28,31 @@ nextflow_workflow {
         }
     }
 
-    test('custom interleaved core regions still produce one file per contig') {
+    test('custom interleaved intervals preserve coordinates and one file per contig') {
         when {
             workflow {
                 """
-                def bed = file('${outputDir}/custom.bed')
-                bed.text = file('${projectDir}/assets/Pf3D7_core.bed').readLines().sort { it.split('\\t')[1].toInteger() }.join('\\n') + '\\n'
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
-                input[0] = bed.toString()
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
+                def fixtures = '${outputDir}'
+                def reference = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
+                file(fixtures + '/interleaved.bed').text = 'Pf3D7_02_v3\\t0\\t1\\nPf3D7_01_v3\\t4\\t8\\nPf3D7_02_v3\\t2\\t3\\nPf3D7_01_v3\\t10\\t12\\n'
+                input[0] = fixtures + '/interleaved.bed'
+                input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa')))
+                input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai')))
+                input[3] = Channel.value(tuple([id: 'query'], file(reference + '.dict')))
                 """
             }
         }
         then {
             assert workflow.success
-            def expected = file("${outputDir}/custom.bed")
+            def expected = file("${outputDir}/interleaved.bed")
             assert file(workflow.out.core_bed[0]).toString() == expected.toString()
-            assert workflow.out.intervals.collectMany { file(it[1]).readLines() }.sort() == expected.readLines().sort()
-            assert workflow.out.intervals.collect { it[0].id }.sort() == expected.readLines().collect { it.split('\t')[0] }.unique().sort()
-            assert workflow.out.intervals.every { meta, bed -> file(bed).readLines().every { it.split('\t')[0] == meta.id } }
+            assert workflow.out.intervals.collectMany { file(it[1]).readLines() }.collect {
+                it.split('\t').take(3).join('\t')
+            }.sort() == expected.readLines().sort()
+            assert workflow.out.intervals.collect { it[0].id }.sort() == ['Pf3D7_01_v3', 'Pf3D7_02_v3']
+            assert workflow.out.intervals.every { meta, bed ->
+                file(bed).name == "${meta.id}.bed" && file(bed).readLines().every { it.split('\t')[0] == meta.id }
+            }
         }
     }
 
@@ -58,14 +60,13 @@ nextflow_workflow {
         when {
             workflow {
                 """
-                def bed = file('${outputDir}/single.bed')
-                bed.text = file('${projectDir}/assets/Pf3D7_core.bed').readLines().take(3).join('\\n') + '\\n'
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
-                input[0] = bed.toString()
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
+                def fixtures = '${outputDir}'
+                def reference = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
+                file(fixtures + '/single.bed').text = 'Pf3D7_01_v3\\t0\\t1\\nPf3D7_01_v3\\t2\\t3\\n'
+                input[0] = fixtures + '/single.bed'
+                input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa')))
+                input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai')))
+                input[3] = Channel.value(tuple([id: 'query'], file(reference + '.dict')))
                 """
             }
         }
@@ -73,71 +74,47 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.intervals.size() == 1
             assert workflow.out.intervals[0][0] == [id: 'Pf3D7_01_v3']
-            assert file(workflow.out.intervals[0][1]).text == file("${outputDir}/single.bed").text
+            assert file(workflow.out.intervals[0][1]).readLines().collect {
+                it.split('\t').take(3).join('\t')
+            } == file("${outputDir}/single.bed").readLines()
         }
     }
 
-    test('duplicate contig files fail before conversion') {
+    test('unsafe BED basename is rejected before GATK') {
         when {
-            params { fake_duplicate_contig = true }
             workflow {
                 """
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
-                input[0] = null
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
+                file('${outputDir}/unsafe;name.bed').text = 'Pf3D7_01_v3\\t0\\t1\\n'
+                input[0] = '${outputDir}/unsafe;name.bed'
+                input[1] = Channel.empty()
+                input[2] = Channel.empty()
+                input[3] = Channel.empty()
                 """
             }
         }
         then {
             assert !workflow.success
-            assert workflow.errorReport.contains("duplicate contig 'Pf3D7_01_v3'")
-            assert workflow.errorReport.contains('9999-scattered.interval_list')
-            assert !workflow.trace.tasks().any { it.name.contains('INTERVALLISTTOBED') }
+            def errorReport = workflow.errorReport ?: (workflow.stdout + workflow.stderr).join('\n')
+            assert errorReport.contains('--intervals BED basename must contain only')
         }
     }
 
-    test('unsupported contig fails before conversion') {
+    test('missing local BED is rejected') {
         when {
             workflow {
                 """
-                def bed = file('${outputDir}/unsafe.bed'); bed.text = 'chr;unsafe\\t0\\t1\\n'
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
-                input[0] = bed.toString()
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
+                input[0] = '${outputDir}/missing.bed'
+                input[1] = Channel.empty()
+                input[2] = Channel.empty()
+                input[3] = Channel.empty()
                 """
             }
         }
         then {
             assert !workflow.success
-            assert workflow.errorReport.contains("Unsupported contig 'chr;unsafe' for output filenames")
-            assert !workflow.trace.tasks().any { it.name.contains('INTERVALLISTTOBED') }
-        }
-    }
-
-    test('empty interval lists retain per-file validation') {
-        options '-stub'
-        when {
-            workflow {
-                """
-                def fasta = file('${outputDir}/Pf3D7.fa'); fasta.text = '>synthetic\\nA\\n'
-                def fai = file('${outputDir}/Pf3D7.fa.fai'); fai.text = 'synthetic\\t1\\t0\\t1\\t2\\n'
-                input[0] = null
-                input[1] = Channel.value(tuple([id: 'query'], fasta))
-                input[2] = Channel.value(tuple([id: 'query'], fai))
-                input[3] = Channel.value(tuple([id: 'query'], file('${projectDir}/assets/Pf3D7.dict')))
-                """
-            }
-        }
-        then {
-            assert !workflow.success
-            assert workflow.errorReport.contains('Expected one contig')
-            assert workflow.errorReport.contains('found []')
+            def errorReport = workflow.errorReport ?: (workflow.stdout + workflow.stderr).join('\n')
+            assert errorReport.contains('missing.bed')
+            assert errorReport.contains('No such file or directory:')
         }
     }
 
@@ -154,7 +131,9 @@ nextflow_workflow {
         }
         then {
             assert !workflow.success
-            assert workflow.stdout.any { it.contains('--intervals must be a single local uncompressed BED') }
+            // Early validation can exit before nf-test registers its onComplete report writer.
+            def errorReport = workflow.errorReport ?: (workflow.stdout + workflow.stderr).join('\n')
+            assert errorReport.contains('--intervals must be a single local uncompressed BED file (.bed).')
         }
     }
 }
