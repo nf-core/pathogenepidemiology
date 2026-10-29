@@ -13,16 +13,16 @@ workflow PREPROCESS_READS {
     ch_hostfasta // from workflow PREPARE_REFERENCES
 
     main:
-    ch_adapters = channel.fromPath("${projectDir}/assets/adapters.fa", checkIfExists: true)
+    ch_adapters = channel.value(file("${projectDir}/assets/adapters.fa", checkIfExists: true))
     ch_reads_raw = ch_samples
 
     // Produce QC reports per sample
     fastqc_out = FASTQC(ch_samples)
 
     // Trim adapters first; only the second process filters whole reads against contaminants.
-    ch_reads_trimmed = BBDUK_TRIM(ch_reads_raw, ch_adapters.first())
-    ch_contaminants = ch_hostfasta.first().ifEmpty { [] }
-    ch_reads_clean = BBDUK_FILTER(ch_reads_trimmed.reads, ch_contaminants)
+    ch_reads_trimmed = BBDUK_TRIM(ch_reads_raw, ch_adapters)
+    // PREPARE_REFERENCES supplies a reusable path or [] when no host is requested.
+    ch_reads_clean = BBDUK_FILTER(ch_reads_trimmed.reads, ch_hostfasta)
 
     emit:
     reads_clean   = ch_reads_clean.reads

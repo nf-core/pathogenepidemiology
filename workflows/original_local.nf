@@ -1,5 +1,6 @@
 
 include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references'
+include { PREPARE_INTERVALS    } from '../subworkflows/local/prepare_intervals/main'
 include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads'
 include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main'
@@ -29,6 +30,8 @@ workflow {
   ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
   ch_hostfasta  = PREPARE_REFERENCES.out.hostfasta
   ch_queryfai     = PREPARE_REFERENCES.out.queryfai
+  PREPARE_INTERVALS(params.intervals, ch_queryfasta, ch_queryfai,
+    PREPARE_REFERENCES.out.querydict)
 
 
   // RUN FASTQC ON READS AND USE BBDUK TO REMOVE ADAPTER AND BIO. CONTAMINANT SEQS
@@ -119,8 +122,10 @@ workflow {
     ch_queryfasta,
     ch_queryfai,
     // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
-    channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz"),
-    channel.fromPath("${launchDir}/assets/Strains.2kb.vcf.gz.tbi")
+    channel.value(file("${launchDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)),
+    channel.value(file("${launchDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)),
+    PREPARE_INTERVALS.out.core_bed,
+    PREPARE_INTERVALS.out.intervals
   ).varcalls_s
 
 

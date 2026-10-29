@@ -14,3 +14,5 @@ refs
 *log*
 .nf-test
 local_lint.sh
+.nf-test/
+.nf-test.log

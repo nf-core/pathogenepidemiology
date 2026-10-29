@@ -1,40 +1,69 @@
 nextflow_workflow {
+    name 'Reference sources remain reusable values (real download, indexing and dictionary)'
+    script './main.nf'
+    workflow 'REFERENCE_VALUES'
+    config './nextflow.config'
 
-    name "Test PREPARE_REFERENCES"
-    script "../main.nf"
-    workflow "PREPARE_REFERENCES"
-
-    test("prepare references - stub") {
-        options "-stub"
-        config "./nextflow.config"
-
+    test('host present: downloaded FASTA, real FAI and dictionary are reused for both samples') {
         when {
-            params {
-                outdir = "$outputDir"
-            }
+            params { outdir = "$outputDir" }
             workflow {
                 """
-                input[0] = 'https://example.invalid/query.fa.gz'
-                input[1] = 'https://example.invalid/host.fa.gz'
+                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
+                input[1] = params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
                 """
             }
         }
-
         then {
             assert workflow.success
-            assert workflow.out.queryfasta.size() == 1
-            assert workflow.out.queryfasta[0][0] == [id: 'query']
-            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
-            assert workflow.out.queryfai.size() == 1
-            assert workflow.out.queryfai[0][0] == [id: 'query']
-            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
-            assert workflow.out.hostfasta.size() == 1
-            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
-            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai'].each { name ->
-                assert file("$outputDir/download/$name").exists()
+            assert workflow.out.queryfasta[0][0] == [id: 'genome']
+            assert file(workflow.out.queryfasta[0][1]).name == 'genome.fasta'
+            assert file(workflow.out.queryfai[0][1]).name == 'genome.fasta.fai'
+            assert file(workflow.out.querydict[0][1]).name == 'genome.dict'
+            assert file(workflow.out.hostfasta[0]).name == 'test_1.fastq.gz'
+            assert file(workflow.out.hostfasta[0]).bytes == file("${outputDir}/download/test_1.fastq.gz").bytes
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
+            def fasta = file(workflow.out.queryfasta[0][1])
+            def compressed = file("${outputDir}/download/genome.fasta.gz")
+            assert new java.util.zip.GZIPInputStream(compressed.newInputStream()).withCloseable { it.text } == fasta.text
+            assert file("${outputDir}/download/genome.fasta").text == fasta.text
+            def sequences = [:]
+            def contig
+            fasta.readLines().each { line ->
+                if (line.startsWith('>')) {
+                    contig = line.substring(1).tokenize()[0]
+                    sequences[contig] = 0
+                } else {
+                    sequences[contig] += line.size()
+                }
             }
-            assert !file("$outputDir/download/host.fa").exists()
+            assert file(workflow.out.queryfai[0][1]).readLines().collect { it.split('\t').take(2) } == sequences.collect { id, length -> [id, length.toString()] }
+            assert file(workflow.out.querydict[0][1]).readLines().findAll { it.startsWith('@SQ') }.collect {
+                it.split('\t').findAll { it.startsWith('SN:') || it.startsWith('LN:') }
+            } == sequences.collect { id, length -> ["SN:${id}".toString(), "LN:${length}".toString()] }
+            assert workflow.trace.tasks().count { it.name.contains('GATK4_CREATESEQUENCEDICTIONARY') } == 1
+            assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
+            assert !file("${outputDir}/download/test_1.fastq").exists()
         }
     }
 
+    test('host absent: reusable empty path value skips host download without dropping samples') {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
+                input[1] = null
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.hostfasta == [[]]
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:no-host\n" }
+            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_HOSTFASTA') }
+        }
+    }
 }

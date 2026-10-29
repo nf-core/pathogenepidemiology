@@ -11,6 +11,14 @@
             "fa_icon": "fas fa-dna",
             "description": "Inputs specific to the pathogen epidemiology pipeline.",
             "properties": {
+                "intervals": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^.+\\.bed$",
+                    "description": "Optional local uncompressed BED matching the query reference, used unchanged for core-read filtering and coverage and split by GATK into one calling BED per contig. Defaults to projectDir/assets/Pf3D7_core.bed; basename must be shell-safe.",
+                    "fa_icon": "far fa-file-code"
+                },
                 "queryurl": {
                     "type": "string",
                     "description": "URL of the query reference FASTA to download.",
@@ -237,7 +245,7 @@
                 },
                 "trace_report_suffix": {
                     "type": "string",
-                    "fa_icon": "far calendar",
+                    "fa_icon": "far fa-calendar",
                     "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
                     "hidden": true
                 },

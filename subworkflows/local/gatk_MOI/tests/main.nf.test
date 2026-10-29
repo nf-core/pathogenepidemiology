@@ -1,59 +1,51 @@
 nextflow_workflow {
-    name "Test Subworkflow GATK_MOI"
-    script "../main.nf"
-    workflow "GATK_MOI"
-    options "-stub"
+    name 'Test Subworkflow GATK_MOI'
+    script '../main.nf'
+    workflow 'GATK_MOI'
+    options '-stub-run'
 
-    test("GATK_MOI concatenates small stub VCFs without VQSR") {
+    // Module-provided stubs test wiring, not variant calling or VQSR.
+    // The downloaded BAM is only staged; its reference need not match in stub mode.
+    test('two samples and two contigs produce a cohort and per-sample QC (stub)') {
         when {
+            params {
+                outdir = "$outputDir"
+            }
             workflow {
                 """
-                input[0] = Channel.of(
-                    tuple(
-                        [id: 'test'],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true)
-                    )
-                )
-                input[1] = Channel.of(
-                    tuple(
-                        [id: 'test_ref'],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
-                    )
-                )
-                input[2] = Channel.of(
-                    tuple(
-                        [id: 'test_ref'],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta.fai', checkIfExists: true)
-                    )
-                )
-                input[3] = Channel.of(
-                    file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)
-                )
-                input[4] = Channel.of(
-                    file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)
+                def assets = '${projectDir}/assets'
+                def reference = assets + '/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
+                def bam = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.single_end.sorted.bam', checkIfExists: true)
+                input[0] = Channel.of(tuple([id: 'sample1'], bam), tuple([id: 'sample2'], bam))
+                input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa', checkIfExists: true)))
+                input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai', checkIfExists: true)))
+                input[3] = Channel.value(file(assets + '/Strains.2kb.vcf.gz', checkIfExists: true))
+                input[4] = Channel.value(file(assets + '/Strains.2kb.vcf.gz.tbi', checkIfExists: true))
+                input[5] = Channel.value(file(assets + '/Pf3D7_core.bed', checkIfExists: true))
+                input[6] = Channel.of(
+                    tuple([id: 'Pf3D7_01_v3'], file(assets + '/intervals/core_chr1.list', checkIfExists: true)),
+                    tuple([id: 'Pf3D7_02_v3'], file(assets + '/intervals/core_chr2.list', checkIfExists: true))
                 )
                 """
             }
         }
 
         then {
-            assertAll(
-                { assert workflow.success },
-                // Small stub VCFs bypass VQSR, but still produce a cohort.
-                { assert workflow.out.varcalls_s.size() == 1 },
-                { assert workflow.out.varcalls_s[0][0] == [id: 'cohort'] },
-                { assert workflow.out.varcalls_s[0][1].endsWith('cohort.bcf.gz') },
-                { assert workflow.out.varcalls_s[0][2].endsWith('cohort.bcf.gz.csi') },
-                {
-                    [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
-                        assert channel.size() == 1
-                        assert channel[0].size() == 2
-                        assert channel[0][0] == [id: 'test']
-                        assert channel[0][1] instanceof String
-                    }
-                }
-            )
+            assert workflow.success
+            assert workflow.out.varcalls_s.size() == 1
+            assert workflow.out.varcalls_s[0][0] == [id: 'cohort']
+            assert file(workflow.out.varcalls_s[0][1]).name == 'cohort.bcf.gz'
+            assert file(workflow.out.varcalls_s[0][2]).name == 'cohort.bcf.gz.csi'
+            [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
+                assert channel.collect { it[0].id }.sort() == ['sample1', 'sample2']
+            }
+            assert new File("$outputDir/varcalls_gvcf").listFiles().findAll { it.name.endsWith('.vcf.gz') }.collect { it.name }.sort() == [
+                'sample1.Pf3D7_01_v3.g.vcf.gz', 'sample1.Pf3D7_02_v3.g.vcf.gz',
+                'sample2.Pf3D7_01_v3.g.vcf.gz', 'sample2.Pf3D7_02_v3.g.vcf.gz'
+            ]
+            assert new File("$outputDir/varcalls_by_chr").listFiles().findAll { it.name.endsWith('.vcf.gz') }.collect { it.name }.sort() == [
+                'Pf3D7_01_v3.vcf.gz', 'Pf3D7_02_v3.vcf.gz'
+            ]
         }
     }
-
 }

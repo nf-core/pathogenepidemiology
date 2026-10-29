@@ -12,7 +12,7 @@ include { PICARD_COLLECTINSERTSIZEMETRICS                    } from '../../../mo
 include { GATK4_HAPLOTYPECALLER                              } from '../../../modules/nf-core/gatk4/haplotypecaller/main'
 include { GATK4_GENOMICSDBIMPORT                             } from '../../../modules/nf-core/gatk4/genomicsdbimport/main'
 include { GATK4_GENOTYPEGVCFS                                } from '../../../modules/nf-core/gatk4/genotypegvcfs/main'
-include { BCFTOOLS_CONCAT                                    } from '../../../modules/nf-core/bcftools/concat/main'
+include { CONCAT_COHORT                                      } from '../concat_cohort/main'
 include {
     GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_INDELS
 } from '../../../modules/nf-core/gatk4/variantrecalibrator/main'
@@ -34,34 +34,36 @@ workflow GATK_MOI {
     ch_queryfai
     ch_vqsr_resource
     ch_vqsr_resource_tbi
+    ch_core_bed
+    ch_intervals
 
     main:
-
 
     GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
 
     ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
-    ch_fasta_val = ch_queryfasta.map { _meta, fasta -> fasta }.first()
-    ch_fai_val = ch_queryfai.map { _meta, fai -> fai }.first()
-    ch_dict_val = ch_querydict.map { _meta, dict -> dict }.first()
+    ch_fasta_val = ch_queryfasta.map { _meta, fasta -> fasta }
+    ch_fai_val = ch_queryfai.map { _meta, fai -> fai }
+    ch_dict_val = ch_querydict.map { _meta, dict -> dict }
+
+    // Both references are values; map preserves reuse without a queue-producing join.
+    ch_reference = ch_queryfasta.map { meta, fasta -> tuple(meta, fasta, ch_queryfai.val[1]) }
 
 
 
     GATK4_CLEANSAM(
         ch_aligned_s,
-        ch_queryfasta.join(ch_queryfai, by: 0).first(),
+        ch_reference,
     )
 
     PICARD_SORTSAM(GATK4_CLEANSAM.out.bam, 'coordinate')
-
-    def core_bed = file("${projectDir}/assets/Pf3D7_core.bed")
 
     GATK4_MARKDUPLICATES_CUSTOM(
         PICARD_SORTSAM.out.bam,
         ch_fasta_val,
         ch_fai_val,
-        core_bed,
+        ch_core_bed,
     )
 
     ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam.join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
@@ -70,20 +72,13 @@ workflow GATK_MOI {
         ch_dedup_bam.map { meta, bam, _bai -> tuple(meta, bam) }
     )
 
-    ch_mosdepth_input = ch_dedup_bam.map { meta, bam, bai -> tuple(meta, bam, bai, core_bed) }
+    ch_mosdepth_input = ch_dedup_bam.combine(ch_core_bed)
 
     MOSDEPTH(
         ch_mosdepth_input,
-        ch_queryfasta.first(),
+        ch_queryfasta,
         [],
     )
-
-    ch_intervals = channel
-        .fromPath("${projectDir}/assets/intervals/core_chr*.list")
-        .map { list ->
-            def chr_id = list.baseName.replaceAll(/core_chr0*/, 'chr')
-            tuple([id: chr_id], list)
-        }
 
     ch_hc_input = ch_dedup_bam
         .combine(ch_intervals)
@@ -94,22 +89,21 @@ workflow GATK_MOI {
 
     GATK4_HAPLOTYPECALLER(
         ch_hc_input,
-        ch_queryfasta.first(),
-        ch_queryfai.first(),
-        ch_querydict.first(),
+        ch_queryfasta,
+        ch_queryfai,
+        ch_querydict,
         [[:], []],
         [[:], []],
     )
 
     ch_gdbi_input = GATK4_HAPLOTYPECALLER.out.vcf
         .join(GATK4_HAPLOTYPECALLER.out.tbi, by: 0)
-        .map { meta, vcf, tbi -> tuple([chr: meta.chr], vcf, tbi) }
+        .map { meta, vcf, tbi -> tuple([id: meta.chr], vcf, tbi) }
         .groupTuple(by: 0)
-        .map { chr_meta, vcfs, tbis ->
-            def chr_num = chr_meta.chr.replace('chr', '')
-            def interval = file("${projectDir}/assets/intervals/core_chr${chr_num}.list")
+        .join(ch_intervals, by: 0)
+        .map { interval_meta, vcfs, tbis, interval ->
             tuple(
-                [id: chr_meta.chr],
+                interval_meta,
                 vcfs,
                 tbis,
                 interval,
@@ -127,9 +121,9 @@ workflow GATK_MOI {
 
     GATK4_GENOTYPEGVCFS(
         GATK4_GENOMICSDBIMPORT.out.genomicsdb.map { meta, db -> tuple(meta, db, [], [], []) },
-        ch_queryfasta.first(),
-        ch_queryfai.first(),
-        ch_querydict.first(),
+        ch_queryfasta,
+        ch_queryfai,
+        ch_querydict,
         [[:], []],
         [[:], []],
     )
@@ -149,8 +143,8 @@ workflow GATK_MOI {
 
     GATK4_VARRECAL_INDELS(
         ch_raw_vcf,
-        ch_vqsr_resource.first(),
-        ch_vqsr_resource_tbi.first(),
+        ch_vqsr_resource,
+        ch_vqsr_resource_tbi,
         ['-resource:Strains,known=true,training=true,truth=true,prior=15.0 Strains.2kb.vcf.gz'],
         ch_fasta_val,
         ch_fai_val,
@@ -168,8 +162,8 @@ workflow GATK_MOI {
 
     GATK4_VARRECAL_SNPS(
         ch_indelrecal_vcf,
-        ch_vqsr_resource.first(),
-        ch_vqsr_resource_tbi.first(),
+        ch_vqsr_resource,
+        ch_vqsr_resource_tbi,
         ['-resource:Strains,known=true,training=true,truth=true,prior=15.0 Strains.2kb.vcf.gz'],
         ch_fasta_val,
         ch_fai_val,
@@ -185,17 +179,9 @@ workflow GATK_MOI {
 
     ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf.join(GATK4_VQSR_SNPS.out.tbi, by: 0)
 
-    ch_concat_input = ch_vqsr_output
-        .mix(ch_bypass_vcf)
-        .collect(flat: false)
-        .map { items ->
-            def sorted = items.sort { a, b -> (a[0].id - 'chr').toInteger() <=> (b[0].id - 'chr').toInteger() }
-            tuple([id: 'cohort'], sorted.collect { item -> item[1] }, sorted.collect { item -> item[2] })
-        }
+    CONCAT_COHORT(ch_vqsr_output.mix(ch_bypass_vcf), ch_queryfai)
 
-    BCFTOOLS_CONCAT(ch_concat_input)
-
-    varcalls_s = BCFTOOLS_CONCAT.out.vcf.join(BCFTOOLS_CONCAT.out.index, by: 0)
+    varcalls_s = CONCAT_COHORT.out.vcf.join(CONCAT_COHORT.out.index, by: 0)
 
     emit:
     varcalls_s          = varcalls_s
