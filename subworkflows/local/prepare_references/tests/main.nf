@@ -26,7 +26,7 @@ workflow REFERENCE_VALUES {
     hosturl
 
     main:
-    PREPARE_REFERENCES(queryurl, hosturl)
+    PREPARE_REFERENCES(queryurl, hosturl, null, null)
     // Assert channel type, not just a singleton emission: queues also emit once.
     assert PREPARE_REFERENCES.out.queryfasta instanceof groovyx.gpars.dataflow.DataflowVariable
     assert PREPARE_REFERENCES.out.queryfai instanceof groovyx.gpars.dataflow.DataflowVariable

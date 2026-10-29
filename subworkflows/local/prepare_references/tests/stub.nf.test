@@ -12,6 +12,8 @@ nextflow_workflow {
                 """
                 input[0] = 'https://example.invalid/query.fa.gz'
                 input[1] = 'https://example.invalid/host.fa.gz'
+                input[2] = null
+                input[3] = null
                 """
             }
         }
@@ -26,11 +28,10 @@ nextflow_workflow {
             assert workflow.out.querydict[0][0] == [id: 'query']
             assert file(workflow.out.querydict[0][1]).name == 'query.dict'
             assert workflow.out.hostfasta.size() == 1
-            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
-            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai'].each { name ->
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa'
+            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai', 'host.fa'].each { name ->
                 assert file("$outputDir/download/$name").exists()
             }
-            assert !file("$outputDir/download/host.fa").exists()
         }
     }
 }

@@ -19,6 +19,22 @@
                     "description": "Optional local uncompressed BED matching the query reference, used unchanged for core-read filtering and coverage and split by GATK into one calling BED per contig. Defaults to projectDir/assets/Pf3D7_core.bed; basename must be shell-safe.",
                     "fa_icon": "far fa-file-code"
                 },
+                "query_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^.+\\.(fa|fasta|fna)(\\.gz)?$",
+                    "description": "Local query reference FASTA (.fa, .fasta or .fna, optionally gzipped). Takes precedence over queryurl; the FASTA index is generated automatically. Basename must start with an ASCII letter, digit or underscore and contain only ASCII letters, digits, dots, underscores and hyphens.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "host_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^.+\\.(fa|fasta|fna)(\\.gz)?$",
+                    "description": "Local host reference FASTA (.fa, .fasta or .fna, optionally gzipped). Takes precedence over hosturl. Basename must start with an ASCII letter, digit or underscore and contain only ASCII letters, digits, dots, underscores and hyphens.",
+                    "fa_icon": "far fa-file-code"
+                },
                 "queryurl": {
                     "type": "string",
                     "description": "URL of the query reference FASTA to download.",

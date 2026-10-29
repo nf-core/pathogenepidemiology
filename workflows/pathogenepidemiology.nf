@@ -48,7 +48,9 @@ workflow PATHOGENEPIDEMIOLOGY {
     //
     PREPARE_REFERENCES(
         params.queryurl,
-        params.hosturl
+        params.hosturl,
+        params.query_fasta,
+        params.host_fasta
     )
     PREPARE_INTERVALS(params.intervals, PREPARE_REFERENCES.out.queryfasta,
         PREPARE_REFERENCES.out.queryfai, PREPARE_REFERENCES.out.querydict)

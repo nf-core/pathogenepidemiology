@@ -20,8 +20,8 @@ nextflow_workflow {
             assert file(workflow.out.queryfasta[0][1]).name == 'genome.fasta'
             assert file(workflow.out.queryfai[0][1]).name == 'genome.fasta.fai'
             assert file(workflow.out.querydict[0][1]).name == 'genome.dict'
-            assert file(workflow.out.hostfasta[0]).name == 'test_1.fastq.gz'
-            assert file(workflow.out.hostfasta[0]).bytes == file("${outputDir}/download/test_1.fastq.gz").bytes
+            assert file(workflow.out.hostfasta[0]).name == 'test_1.fastq'
+            assert file(workflow.out.hostfasta[0]).text == new java.util.zip.GZIPInputStream(file("${outputDir}/download/test_1.fastq.gz").newInputStream()).withCloseable { it.text }
             assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
             assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
             def fasta = file(workflow.out.queryfasta[0][1])
@@ -44,7 +44,7 @@ nextflow_workflow {
             } == sequences.collect { id, length -> ["SN:${id}".toString(), "LN:${length}".toString()] }
             assert workflow.trace.tasks().count { it.name.contains('GATK4_CREATESEQUENCEDICTIONARY') } == 1
             assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
-            assert !file("${outputDir}/download/test_1.fastq").exists()
+            assert file("${outputDir}/download/test_1.fastq").exists()
         }
     }
 

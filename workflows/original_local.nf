@@ -24,7 +24,9 @@ workflow {
   // DOWNLOAD AND INDEX REFERENCE FASTA FILES
   PREPARE_REFERENCES(
     params.queryurl,
-    params.hosturl
+    params.hosturl,
+    params.query_fasta,
+    params.host_fasta
   )
 
   ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
