@@ -9,6 +9,9 @@ def validateLocalBed(value) {
     if (!bed.isFile()) {
         error "--intervals must be a single file: ${value}"
     }
+    if (bed.toFile().length() == 0) {
+        error "--intervals BED file must not be empty: ${value}"
+    }
     return bed
 }
 

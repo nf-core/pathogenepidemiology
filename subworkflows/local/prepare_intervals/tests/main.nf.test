@@ -118,6 +118,26 @@ nextflow_workflow {
         }
     }
 
+    test('empty BED is rejected before interval splitting') {
+        when {
+            workflow {
+                """
+                def bed = file('${outputDir}/empty.bed')
+                bed.text = ''
+                input[0] = bed.toString()
+                input[1] = Channel.empty()
+                input[2] = Channel.empty()
+                input[3] = Channel.empty()
+                """
+            }
+        }
+        then {
+            assert !workflow.success
+            assert workflow.stdout.any { it.contains('--intervals BED file must not be empty') }
+            assert !workflow.trace.tasks().any { it.name.contains('GATK4_SPLITINTERVALS') }
+        }
+    }
+
     test('non-local BED is rejected') {
         when {
             workflow {
