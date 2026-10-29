@@ -27,6 +27,16 @@ for PhiX-only filtering, or a path/list of paths for additional references.
 The full pipeline still obtains the host reference from `hosturl` as before;
 this change does not introduce a new optional command-line reference parameter.
 
+Reference downloads use the pinned nf-core WGET module; the query reference is
+decompressed with nf-core GUNZIP, indexed with SAMTOOLS_FAIDX and given a sequence
+dictionary with GATK4_CREATESEQUENCEDICTIONARY. The optional host reference
+remains compressed for preprocessing. Downloads, the decompressed
+query and its index are published under `<outdir>/download`; tasks consume
+output channels rather than published copies. Query and host URLs must have
+distinct basenames that do not collide with the decompressed query or its index.
+Reference outputs remain reusable value channels shared by all samples and intervals;
+an absent host URL supplies an empty path value and skips the host download.
+
 ### Intervals
 
 Use the optional `--intervals` parameter to select a BED for core-read filtering,

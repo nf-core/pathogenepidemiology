@@ -1,0 +1,21 @@
+nextflow_workflow {
+    name 'Cohort concat preserves reference order, not filenames'
+    script './main.nf'
+    workflow 'TEST_CONCAT_COHORT'
+
+    test('real mixed VQSR/bypass VCFs retain nonlexical contig order and both samples') {
+        when {
+            params { outdir = "$outputDir" }
+        }
+        then {
+            assert workflow.success
+            assert file(workflow.out.records[0]).readLines() == [
+                'chr2\t10\t0/1\t1/1\t',
+                'chr10\t10\t0/1\t1/1\t',
+                'chr1\t10\t0/1\t1/1\t'
+            ]
+            assert file(workflow.out.samples[0]).readLines() == ['sample1', 'sample2']
+            assert file(workflow.out.indexed[0]).text.trim() == '3'
+        }
+    }
+}

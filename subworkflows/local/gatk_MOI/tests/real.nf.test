@@ -1,0 +1,32 @@
+nextflow_workflow {
+    name 'Real two-sample, two-contig GATK cohort integration'
+    script './real.nf'
+    workflow 'REAL_GATK_COHORT'
+    config './real.config'
+
+    test('real calling, joint genotyping and indexed concat retain both samples and reference order') {
+        when {
+            params { outdir = "$outputDir" }
+        }
+        then {
+            assert workflow.success
+            assert file(workflow.out.samples[0]).readLines() == ['sample1', 'sample2']
+            def records = file(workflow.out.records[0]).readLines().collect { it.split('\t') }
+            assert records.collect { it[0] }.unique() == ['chr2', 'chr10']
+            assert records.every { it[1] == '600' && it.size() == 4 }
+            assert records.every { it[2] == '1/1/1/1/1/1' && it[3] == '1/1/1/1/1/1' }
+            assert records.size() == 2
+            def dictionaryOrder = file("$outputDir/gatk4/query.dict").readLines()
+                .findAll { it.startsWith('@SQ') }
+                .collect { it.split('\t').find { field -> field.startsWith('SN:') }.substring(3) }
+            assert records.collect { it[0] }.unique() == dictionaryOrder
+            assert file(workflow.out.indexed[0]).text.trim() == '2'
+            assert workflow.out.qc.collect { it[0].id }.sort() == ['sample1', 'sample2']
+            assert workflow.trace.tasks().count { it.name.contains('GATK4_HAPLOTYPECALLER') } == 4
+            assert workflow.trace.tasks().count { it.name.contains('GATK4_GENOMICSDBIMPORT') } == 2
+            assert workflow.trace.tasks().count { it.name.contains('GATK4_GENOTYPEGVCFS') } == 2
+            // Tiny synthetic callsets intentionally exercise the unrecalibrated bypass.
+            assert !workflow.trace.tasks().any { it.name.contains('VARRECAL') }
+        }
+    }
+}

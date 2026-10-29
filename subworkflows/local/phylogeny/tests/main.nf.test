@@ -1,6 +1,6 @@
 nextflow_workflow {
     name "Test Subworkflow PHYLOGENY"
-    script "../phylogeny.nf"
+    script "../main.nf"
     config "./nextflow.config"
     workflow "PHYLOGENY"
     options "-stub"

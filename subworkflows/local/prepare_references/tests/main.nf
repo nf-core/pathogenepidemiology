@@ -1,4 +1,4 @@
-include { PREPARE_REFERENCES } from '../../prepare_references.nf'
+include { PREPARE_REFERENCES } from '../main.nf'
 
 process REUSE_REFERENCE {
     input:

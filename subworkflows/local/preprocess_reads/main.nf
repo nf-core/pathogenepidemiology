@@ -1,7 +1,7 @@
 
-include { FASTQC       } from '../../modules/nf-core/fastqc/main'
-include { BBDUK_CUSTOM as BBDUK_TRIM   } from '../../modules/local/bbduk_custom/main'
-include { BBDUK_CUSTOM as BBDUK_FILTER } from '../../modules/local/bbduk_custom/main'
+include { FASTQC       } from '../../../modules/nf-core/fastqc/main'
+include { BBDUK_CUSTOM as BBDUK_TRIM   } from '../../../modules/local/bbduk_custom/main'
+include { BBDUK_CUSTOM as BBDUK_FILTER } from '../../../modules/local/bbduk_custom/main'
 
 
 

@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: prepare_references
+description: Download query and optional host references, decompress the query and create its FASTA index and sequence dictionary.
+keywords:
+  - reference
+  - fasta
+  - indexing
+components:
+  - wget
+  - gunzip
+  - samtools/faidx
+  - gatk4/createsequencedictionary
+input:
+  - queryurl:
+      type: string
+      description: URL of the gzip-compressed query FASTA.
+  - hosturl:
+      type: string
+      description: Optional URL of the host reference, retained in its downloaded format.
+output:
+  - queryfasta:
+      description: "Decompressed query reference. Structure: [ val(meta), path(fasta) ]"
+  - queryfai:
+      description: "Query FASTA index. Structure: [ val(meta), path(fai) ]"
+  - hostfasta:
+      description: Downloaded host reference file, without metadata or decompression, or an empty path value when absent.
+  - querydict:
+      description: "Query sequence dictionary. Structure: [ val(meta), path(dict) ]"
+authors: []

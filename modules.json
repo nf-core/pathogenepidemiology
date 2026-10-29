@@ -115,6 +115,11 @@
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "0902eac3012baaf4f9ab6513c8c55acc9353c96c",
+                        "installed_by": ["modules"]
+                    },
                     "iqtree": {
                         "branch": "master",
                         "git_sha": "fb60d28393f3c278daecbd276e7d8cd502689a8b",
@@ -178,6 +183,11 @@
                     "untar": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "wget": {
+                        "branch": "master",
+                        "git_sha": "8dfb9868efd0e39f27ae0fed1ed204dc8f0b2a13",
                         "installed_by": ["modules"]
                     }
                 }

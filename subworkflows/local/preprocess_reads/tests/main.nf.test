@@ -1,7 +1,7 @@
 nextflow_workflow {
 
     name "Test BBDUK_CUSTOM reuse in PREPROCESS_READS"
-    script "../../preprocess_reads.nf"
+    script "../main.nf"
     workflow "PREPROCESS_READS"
 
     tag "subworkflows"

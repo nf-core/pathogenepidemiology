@@ -1,0 +1,36 @@
+nextflow_workflow {
+    name "Test PREPARE_REFERENCES publication - stub"
+    script "../main.nf"
+    workflow "PREPARE_REFERENCES"
+    config "./nextflow.config"
+
+    test("prepare references - stub") {
+        options "-stub"
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = 'https://example.invalid/host.fa.gz'
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.queryfasta.size() == 1
+            assert workflow.out.queryfasta[0][0] == [id: 'query']
+            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
+            assert workflow.out.queryfai.size() == 1
+            assert workflow.out.queryfai[0][0] == [id: 'query']
+            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
+            assert workflow.out.querydict[0][0] == [id: 'query']
+            assert file(workflow.out.querydict[0][1]).name == 'query.dict'
+            assert workflow.out.hostfasta.size() == 1
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
+            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai'].each { name ->
+                assert file("$outputDir/download/$name").exists()
+            }
+            assert !file("$outputDir/download/host.fa").exists()
+        }
+    }
+}

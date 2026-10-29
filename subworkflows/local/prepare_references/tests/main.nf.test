@@ -1,44 +1,50 @@
 nextflow_workflow {
-    name 'Reference sources remain reusable values (real indexing and GATK dictionary)'
+    name 'Reference sources remain reusable values (real download, indexing and dictionary)'
     script './main.nf'
     workflow 'REFERENCE_VALUES'
     config './nextflow.config'
 
-    test('host present: cached FASTA, real FAI and dictionary are reused for both samples') {
+    test('host present: downloaded FASTA, real FAI and dictionary are reused for both samples') {
         when {
             params { outdir = "$outputDir" }
             workflow {
                 """
-                // Seed the documented download store, avoiding any network fixture dependency.
-                def downloads = file('${outputDir}/download'); downloads.toFile().mkdirs()
-                def fasta = file('${outputDir}/expected.fa')
-                fasta.text = ['zeta', 'alpha', 'chr;unsafe'].collect { '>' + it + '\\n' + ('N' * 20) + '\\n' }.join('')
-                def gzip = new java.util.zip.GZIPOutputStream(file('${outputDir}/download/query.fa.gz').toFile().newOutputStream())
-                gzip.write(fasta.bytes)
-                gzip.close()
-                file('${outputDir}/download/host.fa.gz').bytes = file('${outputDir}/download/query.fa.gz').bytes
-                input[0] = 'https://example.invalid/query.fa.gz'
-                input[1] = 'https://example.invalid/host.fa.gz'
+                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
+                input[1] = params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
                 """
             }
         }
         then {
             assert workflow.success
-            assert workflow.out.queryfasta[0][0] == [id: 'query']
-            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
-            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
-            assert file(workflow.out.querydict[0][1]).name == 'query.dict'
-            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
-            assert file(workflow.out.hostfasta[0]).bytes == file("${outputDir}/download/query.fa.gz").bytes
+            assert workflow.out.queryfasta[0][0] == [id: 'genome']
+            assert file(workflow.out.queryfasta[0][1]).name == 'genome.fasta'
+            assert file(workflow.out.queryfai[0][1]).name == 'genome.fasta.fai'
+            assert file(workflow.out.querydict[0][1]).name == 'genome.dict'
+            assert file(workflow.out.hostfasta[0]).name == 'test_1.fastq.gz'
+            assert file(workflow.out.hostfasta[0]).bytes == file("${outputDir}/download/test_1.fastq.gz").bytes
             assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
             assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
-            assert file(workflow.out.queryfasta[0][1]).text == file("${outputDir}/expected.fa").text
-            assert file(workflow.out.queryfai[0][1]).text == 'zeta\t20\t6\t20\t21\nalpha\t20\t34\t20\t21\nchr;unsafe\t20\t67\t20\t21\n'
+            def fasta = file(workflow.out.queryfasta[0][1])
+            def compressed = file("${outputDir}/download/genome.fasta.gz")
+            assert new java.util.zip.GZIPInputStream(compressed.newInputStream()).withCloseable { it.text } == fasta.text
+            assert file("${outputDir}/download/genome.fasta").text == fasta.text
+            def sequences = [:]
+            def contig
+            fasta.readLines().each { line ->
+                if (line.startsWith('>')) {
+                    contig = line.substring(1).tokenize()[0]
+                    sequences[contig] = 0
+                } else {
+                    sequences[contig] += line.size()
+                }
+            }
+            assert file(workflow.out.queryfai[0][1]).readLines().collect { it.split('\t').take(2) } == sequences.collect { id, length -> [id, length.toString()] }
             assert file(workflow.out.querydict[0][1]).readLines().findAll { it.startsWith('@SQ') }.collect {
                 it.split('\t').findAll { it.startsWith('SN:') || it.startsWith('LN:') }
-            } == [['SN:zeta', 'LN:20'], ['SN:alpha', 'LN:20'], ['SN:chr;unsafe', 'LN:20']]
+            } == sequences.collect { id, length -> ["SN:${id}".toString(), "LN:${length}".toString()] }
             assert workflow.trace.tasks().count { it.name.contains('GATK4_CREATESEQUENCEDICTIONARY') } == 1
             assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
+            assert !file("${outputDir}/download/test_1.fastq").exists()
         }
     }
 
@@ -47,13 +53,7 @@ nextflow_workflow {
             params { outdir = "$outputDir" }
             workflow {
                 """
-                def downloads = file('${outputDir}/download'); downloads.toFile().mkdirs()
-                def fasta = file('${outputDir}/expected.fa')
-                fasta.text = ['zeta', 'alpha', 'chr;unsafe'].collect { '>' + it + '\\n' + ('N' * 20) + '\\n' }.join('')
-                def gzip = new java.util.zip.GZIPOutputStream(file('${outputDir}/download/query.fa.gz').toFile().newOutputStream())
-                gzip.write(fasta.bytes)
-                gzip.close()
-                input[0] = 'https://example.invalid/query.fa.gz'
+                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
                 input[1] = null
                 """
             }
