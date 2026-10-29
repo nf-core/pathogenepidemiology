@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: prepare_intervals
+description: Select one reusable BED for core-read filtering and coverage, split it with GATK into one interval list per contig and convert each back to BED for calling.
+keywords:
+  - bed
+  - intervals
+components:
+  - gatk4/splitintervals
+  - gatk4/intervallisttobed
+input:
+  - intervals:
+      type: string
+      description: Optional single local uncompressed BED path for core-read filtering, coverage and calling; defaults to projectDir/assets/Pf3D7_core.bed.
+  - ch_queryfasta:
+      description: "Query FASTA tuple channel: [ val(meta), path(fasta) ]."
+  - ch_queryfai:
+      description: "Query FASTA index tuple channel: [ val(meta), path(fai) ]."
+  - ch_querydict:
+      description: "Query sequence dictionary tuple channel: [ val(meta), path(dict) ]."
+output:
+  - core_bed:
+      description: Reusable value channel containing the unchanged selected BED path for core-read filtering and coverage.
+  - intervals:
+      description: "One BED per contig: [ val(meta), path(bed) ]; meta.id is the actual contig. Duplicate contigs across output files cause an error. Concat retains lexical filename ordering."
+authors: []

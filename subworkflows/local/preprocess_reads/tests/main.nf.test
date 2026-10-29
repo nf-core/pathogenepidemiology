@@ -18,7 +18,7 @@ nextflow_workflow {
                 def read1 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
                 def read2 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_2.fastq.gz', checkIfExists: true)
                 input[0] = Channel.of(tuple([id: 'paired', single_end: false, instrument_platform: 'ILLUMINA'], [read1, read2]))
-                input[1] = Channel.empty()
+                input[1] = Channel.value([])
                 """
             }
         }

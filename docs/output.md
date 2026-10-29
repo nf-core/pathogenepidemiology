@@ -11,9 +11,12 @@ The directories listed below will be created in the results directory after the 
 In the GATK subworkflow, chromosome VCFs larger than 8000 bytes pass through VQSR.
 VCFs of 8000 bytes or smaller bypass VQSR and contribute **unrecalibrated calls**
 to the cohort alongside completed VQSR outputs; small chromosomes are not dropped.
-VCFs remain paired with their indexes. The existing concat module sorts input
-filenames lexicographically (for example, `chr1`, `chr10`, ..., `chr2`), so the
-cohort does not promise numeric chromosome order.
+VCFs remain paired with their indexes. Each contig has one calling BED and one
+cohort VCF: `chr1.vcf.gz` (or `chr1.snp.recal.vcf.gz` after VQSR).
+Per-sample GVCFs are named `sample.chr1.g.vcf.gz`; the final cohort name is unchanged.
+Duplicate contigs across interval files cause a workflow error before conversion.
+The concat module still sorts filenames lexicographically (`chr1`, `chr10`, `chr2`),
+not by reference or natural chromosome order.
 
 ## Pipeline overview
 

@@ -1,0 +1,69 @@
+nextflow_workflow {
+    name 'Reference sources remain reusable values (real indexing and GATK dictionary)'
+    script './main.nf'
+    workflow 'REFERENCE_VALUES'
+    config './nextflow.config'
+
+    test('host present: cached FASTA, real FAI and dictionary are reused for both samples') {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                // Seed the documented download store, avoiding any network fixture dependency.
+                def downloads = file('${outputDir}/download'); downloads.toFile().mkdirs()
+                def fasta = file('${outputDir}/expected.fa')
+                fasta.text = ['zeta', 'alpha', 'chr;unsafe'].collect { '>' + it + '\\n' + ('N' * 20) + '\\n' }.join('')
+                def gzip = new java.util.zip.GZIPOutputStream(file('${outputDir}/download/query.fa.gz').toFile().newOutputStream())
+                gzip.write(fasta.bytes)
+                gzip.close()
+                file('${outputDir}/download/host.fa.gz').bytes = file('${outputDir}/download/query.fa.gz').bytes
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = 'https://example.invalid/host.fa.gz'
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.queryfasta[0][0] == [id: 'query']
+            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
+            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
+            assert file(workflow.out.querydict[0][1]).name == 'query.dict'
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa.gz'
+            assert file(workflow.out.hostfasta[0]).bytes == file("${outputDir}/download/query.fa.gz").bytes
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
+            assert file(workflow.out.queryfasta[0][1]).text == file("${outputDir}/expected.fa").text
+            assert file(workflow.out.queryfai[0][1]).text == 'zeta\t20\t6\t20\t21\nalpha\t20\t34\t20\t21\nchr;unsafe\t20\t67\t20\t21\n'
+            assert file(workflow.out.querydict[0][1]).readLines().findAll { it.startsWith('@SQ') }.collect {
+                it.split('\t').findAll { it.startsWith('SN:') || it.startsWith('LN:') }
+            } == [['SN:zeta', 'LN:20'], ['SN:alpha', 'LN:20'], ['SN:chr;unsafe', 'LN:20']]
+            assert workflow.trace.tasks().count { it.name.contains('GATK4_CREATESEQUENCEDICTIONARY') } == 1
+            assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
+        }
+    }
+
+    test('host absent: reusable empty path value skips host download without dropping samples') {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                def downloads = file('${outputDir}/download'); downloads.toFile().mkdirs()
+                def fasta = file('${outputDir}/expected.fa')
+                fasta.text = ['zeta', 'alpha', 'chr;unsafe'].collect { '>' + it + '\\n' + ('N' * 20) + '\\n' }.join('')
+                def gzip = new java.util.zip.GZIPOutputStream(file('${outputDir}/download/query.fa.gz').toFile().newOutputStream())
+                gzip.write(fasta.bytes)
+                gzip.close()
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = null
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.hostfasta == [[]]
+            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
+            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:no-host\n" }
+            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_HOSTFASTA') }
+        }
+    }
+}
