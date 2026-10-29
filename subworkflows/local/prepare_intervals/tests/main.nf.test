@@ -133,7 +133,8 @@ nextflow_workflow {
         }
         then {
             assert !workflow.success
-            assert workflow.stdout.any { it.contains('--intervals BED file must not be empty') }
+            def errorReport = workflow.errorReport ?: (workflow.stdout + workflow.stderr).join('\n')
+            assert errorReport.contains('--intervals BED file must not be empty')
             assert !workflow.trace.tasks().any { it.name.contains('GATK4_SPLITINTERVALS') }
         }
     }
