@@ -39,6 +39,7 @@ workflow PREPARE_REFERENCES {
     // Explicit local files take precedence independently; validate before launching tasks.
     def local_query = query_fasta != null ? localReference(query_fasta, 'query_fasta') : null
     def local_host = host_fasta != null ? localReference(host_fasta, 'host_fasta') : null
+    // Detect existing auxiliary files alongside the supplied reference FASTA.
     def auxiliaryFiles = [:]
     if (local_query != null) {
         def reference = local_query[1]
