@@ -42,13 +42,13 @@ workflow PREPARE_REFERENCES {
     def auxiliaryFiles = [:]
     if (local_query != null) {
         def reference = local_query[1]
-        def plain = reference.name.replaceFirst(/\.gz$/, '')
-        def stem = plain.replaceFirst(/\.(fa|fasta|fna)$/, '')
-        auxiliaryFiles.fai = file(reference.resolveSibling("${plain}.fai"), checkIfExists: false, glob: false)
-        auxiliaryFiles.dict = file(reference.resolveSibling("${stem}.dict"), checkIfExists: false, glob: false)
-        auxiliaryFiles.mmi = file(reference.resolveSibling("${stem}.mmi"), checkIfExists: false, glob: false)
+        def referenceFilename = reference.name.replaceFirst(/\.gz$/, '')
+        def referenceName = referenceFilename.replaceFirst(/\.(fa|fasta|fna)$/, '')
+        auxiliaryFiles.fai = file(reference.resolveSibling("${referenceFilename}.fai"), checkIfExists: false, glob: false)
+        auxiliaryFiles.dict = file(reference.resolveSibling("${referenceName}.dict"), checkIfExists: false, glob: false)
+        auxiliaryFiles.mmi = file(reference.resolveSibling("${referenceName}.mmi"), checkIfExists: false, glob: false)
         def bwa = ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].collect {
-            file(reference.resolveSibling("${plain}.${it}"), checkIfExists: false, glob: false)
+            file(reference.resolveSibling("${referenceFilename}.${it}"), checkIfExists: false, glob: false)
         }
         // A present but invalid auxiliary file (including a broken symlink) is an input error.
         (auxiliaryFiles.values() + bwa).each { asset ->
