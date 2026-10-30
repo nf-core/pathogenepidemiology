@@ -40,12 +40,32 @@ underscores and hyphens (no spaces or shell metacharacters). This restriction
 applies to the basename, not its parent directories.
 For both local and downloaded
 references, gzipped files are decompressed and plain FASTAs pass through
-directly. A query FASTA index is always generated; no pre-existing `.fai` is
-required. A sequence dictionary is also generated with GATK4_CREATESEQUENCEDICTIONARY.
+directly. For an explicitly supplied `/refs/query.fa` (or `/refs/query.fa.gz`),
+the pipeline automatically selects these optional companion inputs in `/refs`:
+
+| Index class         | Exact companion filenames                                                               |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| FASTA index         | `query.fa.fai`                                                                          |
+| Sequence dictionary | `query.dict`                                                                            |
+| minimap2            | `query.mmi`                                                                             |
+| BWA-MEM3            | `query.fa.0123`, `query.fa.amb`, `query.fa.ann`, `query.fa.bwt.2bit.64`, `query.fa.pac` |
+
+For `.fasta` or `.fna`, retain that extension in FASTA/BWA sidecars and remove
+it for `.dict` and `.mmi`. Only exact regular readable companions are accepted;
+invalid existing companion paths fail validation. Missing index classes are built.
+An incomplete BWA-MEM3 set is rebuilt in full, never mixed with supplied sidecars.
+Gzip inputs use companions named for the **uncompressed** FASTA; `.gz.fai` and
+`.gzi` are not reused. Index/reference identity and binary compatibility are the
+user's responsibility. No host indexes are required, discovered or built.
+
 Downloaded references use the pinned nf-core WGET module; gzip decompression
 uses nf-core GUNZIP and indexing uses SAMTOOLS_FAIDX.
 Downloaded references, decompressed files and the query index are
-published under `results/download` (or `<outdir>/download`). Tasks consume
+published under `results/download` (or `<outdir>/download`). Selected or built
+dictionaries publish under `<outdir>/gatk4`, minimap2 indexes under `<outdir>/mm2i`,
+and the five BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
+Reused indexes are staged as cacheable task outputs; normal Nextflow `-resume`
+applies without reference `storeDir` caching. Tasks consume
 their output channels, not the published copies.
 Reference outputs remain reusable value channels shared by all samples and intervals;
 when neither a local host file nor a host URL is supplied, an empty path value

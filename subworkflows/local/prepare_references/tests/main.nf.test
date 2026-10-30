@@ -28,6 +28,14 @@ nextflow_workflow {
             assert workflow.out.querydict[0][0] == [id: 'query']
             assert file(workflow.out.querydict[0][1]).name == 'query.dict'
             assert workflow.out.hostfasta.size() == 1
+            assert file(workflow.out.querymmi[0][1]).name == 'query.mmi'
+            assert file(workflow.out.querybwamem3[0][1]).name == 'bwamem3'
+            assert file("$outputDir/mm2i/query.mmi").exists()
+            ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].each { suffix ->
+                assert file("$outputDir/bw3i/bwamem3/query.fa.$suffix").exists()
+            }
+            assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
+            assert workflow.trace.tasks().count { it.name.contains('CREATESEQUENCEDICTIONARY') } == 1
             assert file(workflow.out.hostfasta[0]).name == 'host.fa'
             ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai', 'host.fa'].each { name ->
                 assert file("$outputDir/download/$name").exists()
@@ -55,6 +63,15 @@ nextflow_workflow {
             assert file(workflow.out.queryfai[0][1]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai'
             assert file(workflow.out.querydict[0][1]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict'
             assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_') || it.name.contains('GUNZIP_') }
+            assert !workflow.trace.tasks().any { it.name.contains('SAMTOOLS_FAIDX') || it.name.contains('CREATESEQUENCEDICTIONARY') }
+            assert workflow.trace.tasks().count { it.name.contains('REUSE_QUERYFAI') } == 1
+            assert workflow.trace.tasks().count { it.name.contains('REUSE_QUERYDICT') } == 1
+            assert file(workflow.out.queryfai[0][1]).text == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").text
+            assert file(workflow.out.querydict[0][1]).text == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").text
+            assert workflow.trace.tasks().count { it.name.contains('MINIMAP2_INDEX') } == 1
+            assert workflow.trace.tasks().count { it.name.contains('BWAMEM3_INDEX') } == 1
+            assert file("$outputDir/gatk4/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").exists()
+            assert file("$outputDir/download/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").exists()
         }
     }
 
@@ -76,9 +93,31 @@ nextflow_workflow {
             assert file(workflow.out.hostfasta[0]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa'
             assert workflow.trace.tasks().count { it.name.contains('GUNZIP_QUERYFASTA') } == 1
             assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_') || it.name.contains('GUNZIP_HOSTFASTA') }
+            assert !workflow.trace.tasks().any { it.name.contains('SAMTOOLS_FAIDX') || it.name.contains('CREATESEQUENCEDICTIONARY') }
+            assert file(workflow.out.queryfai[0][1]).name.endsWith('.fa.fai')
+            assert !file(workflow.out.queryfai[0][1]).name.endsWith('.gz.fai')
         }
     }
 
-    // TODO: Real download/decompression/index contents, reference reuse across samples,
-    // input validation and URL-sensitive resume need suitable static integration inputs.
+    test('invalid explicit FASTA fails before any reference task') {
+        options '-stub-run'
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = 'https://example.invalid/unused.fa.gz'
+                input[1] = null
+                input[2] = '${projectDir}/assets/Pf3D7_core.bed'
+                input[3] = null
+                """
+            }
+        }
+        then {
+            assert !workflow.success
+            assert workflow.trace.tasks().isEmpty()
+        }
+    }
+
+    // TODO: Real binary index integrity/checksums, download contents and URL-sensitive resume.
+    // TODO: Complete/partial adjacent BWA sets, adjacent MMI and invalid companion paths need suitable static fixtures.
 }

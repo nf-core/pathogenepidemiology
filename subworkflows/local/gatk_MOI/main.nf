@@ -5,7 +5,6 @@
 
 include { GATK4_CLEANSAM                                     } from '../../../modules/nf-core/gatk4/cleansam/main'
 include { PICARD_SORTSAM                                     } from '../../../modules/nf-core/picard/sortsam/main'
-include { GATK4_CREATESEQUENCEDICTIONARY                     } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
 include { GATK4_MARKDUPLICATES_CUSTOM                        } from '../../../modules/local/gatk4/markduplicates_custom/main'
 include { MOSDEPTH                                           } from '../../../modules/nf-core/mosdepth/main'
 include { PICARD_COLLECTINSERTSIZEMETRICS                    } from '../../../modules/nf-core/picard/collectinsertsizemetrics/main'
@@ -32,16 +31,13 @@ workflow GATK_MOI {
     ch_aligned_s
     ch_queryfasta
     ch_queryfai
+    ch_querydict
     ch_vqsr_resource
     ch_vqsr_resource_tbi
     ch_core_bed
     ch_intervals
 
     main:
-
-    GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
-
-    ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
     ch_fasta_val = ch_queryfasta.map { _meta, fasta -> fasta }
     ch_fai_val = ch_queryfai.map { _meta, fai -> fai }
