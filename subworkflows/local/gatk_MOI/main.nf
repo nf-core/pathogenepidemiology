@@ -12,7 +12,7 @@ include { PICARD_COLLECTINSERTSIZEMETRICS                    } from '../../../mo
 include { GATK4_HAPLOTYPECALLER                              } from '../../../modules/nf-core/gatk4/haplotypecaller/main'
 include { GATK4_GENOMICSDBIMPORT                             } from '../../../modules/nf-core/gatk4/genomicsdbimport/main'
 include { GATK4_GENOTYPEGVCFS                                } from '../../../modules/nf-core/gatk4/genotypegvcfs/main'
-include { CONCAT_COHORT                                      } from '../concat_cohort/main'
+include { BCFTOOLS_CONCAT                                    } from '../../../modules/nf-core/bcftools/concat/main'
 include {
     GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_INDELS
 } from '../../../modules/nf-core/gatk4/variantrecalibrator/main'
@@ -179,9 +179,16 @@ workflow GATK_MOI {
 
     ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf.join(GATK4_VQSR_SNPS.out.tbi, by: 0)
 
-    CONCAT_COHORT(ch_vqsr_output.mix(ch_bypass_vcf), ch_queryfai)
+    ch_cohort = ch_vqsr_output.mix(ch_bypass_vcf)
+        .collect(flat: false)
+        .map { items ->
+            tuple([id: 'cohort'], items.collect { item -> item[1] }, items.collect { item -> item[2] })
+        }
 
-    varcalls_s = CONCAT_COHORT.out.vcf.join(CONCAT_COHORT.out.index, by: 0)
+    // The nf-core wrapper sorts the original VCF filenames lexicographically.
+    BCFTOOLS_CONCAT(ch_cohort)
+
+    varcalls_s = BCFTOOLS_CONCAT.out.vcf.join(BCFTOOLS_CONCAT.out.index, by: 0)
 
     emit:
     varcalls_s          = varcalls_s
