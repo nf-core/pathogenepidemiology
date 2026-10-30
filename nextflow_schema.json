@@ -25,7 +25,7 @@
                     "exists": true,
                     "pattern": "^.+\\.(fa|fasta|fna)(\\.gz)?$",
                     "description": "Local query reference FASTA (.fa, .fasta or .fna, optionally gzipped), overriding queryurl. Reuses exact adjacent uncompressed-name FASTA, dictionary, minimap2 and complete BWA-MEM3 indexes; builds missing classes only. Basename must be shell-safe.",
-                    "help_text": "For /refs/query.fa (or query.fa.gz), optional companion inputs are /refs/query.fa.fai, /refs/query.dict, /refs/query.mmi and all five /refs/query.fa.{0123,amb,ann,bwt.2bit.64,pac} sidecars. Only exact regular readable files are accepted. A partial BWA-MEM3 set is rebuilt in full; .gz.fai and .gzi are not reused. Supplied indexes must match the reference and tool versions. Basenames must start with an ASCII letter, digit or underscore and contain only ASCII letters, digits, dots, underscores and hyphens.",
+                    "help_text": "For /refs/query.fa (or query.fa.gz), optional auxiliary files are /refs/query.fa.fai, /refs/query.dict, /refs/query.mmi and all five /refs/query.fa.{0123,amb,ann,bwt.2bit.64,pac} sidecars. Only exact regular readable files are accepted. A partial BWA-MEM3 set is rebuilt in full; .gz.fai and .gzi are not reused. Supplied indexes must match the reference and tool versions. Basenames must start with an ASCII letter, digit or underscore and contain only ASCII letters, digits, dots, underscores and hyphens.",
                     "fa_icon": "far fa-file-code"
                 },
                 "host_fasta": {

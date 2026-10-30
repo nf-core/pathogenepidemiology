@@ -41,9 +41,9 @@ applies to the basename, not its parent directories.
 For both local and downloaded
 references, gzipped files are decompressed and plain FASTAs pass through
 directly. For an explicitly supplied `/refs/query.fa` (or `/refs/query.fa.gz`),
-the pipeline automatically selects these optional companion inputs in `/refs`:
+the pipeline automatically selects these optional auxiliary files in `/refs`:
 
-| Index class         | Exact companion filenames                                                               |
+| Index class         | Exact auxiliary filenames                                                               |
 | ------------------- | --------------------------------------------------------------------------------------- |
 | FASTA index         | `query.fa.fai`                                                                          |
 | Sequence dictionary | `query.dict`                                                                            |
@@ -51,10 +51,10 @@ the pipeline automatically selects these optional companion inputs in `/refs`:
 | BWA-MEM3            | `query.fa.0123`, `query.fa.amb`, `query.fa.ann`, `query.fa.bwt.2bit.64`, `query.fa.pac` |
 
 For `.fasta` or `.fna`, retain that extension in FASTA/BWA sidecars and remove
-it for `.dict` and `.mmi`. Only exact regular readable companions are accepted;
-invalid existing companion paths fail validation. Missing index classes are built.
+it for `.dict` and `.mmi`. Only exact regular readable auxiliary files are accepted;
+invalid existing auxiliary file paths fail validation. Missing index classes are built.
 An incomplete BWA-MEM3 set is rebuilt in full, never mixed with supplied sidecars.
-Gzip inputs use companions named for the **uncompressed** FASTA; `.gz.fai` and
+Gzip inputs use auxiliary files named for the **uncompressed** FASTA; `.gz.fai` and
 `.gzi` are not reused. Index/reference identity and binary compatibility are the
 user's responsibility. No host indexes are required, discovered or built.
 
@@ -64,8 +64,8 @@ Downloaded references, decompressed files and generated query FASTA indexes are
 published under `results/download` (or `<outdir>/download`). Generated
 dictionaries publish under `<outdir>/gatk4`, minimap2 indexes under `<outdir>/mm2i`,
 and the five generated BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
-Reused companions retain their original paths and are passed directly downstream,
-not copied into helper tasks or republished. Only the five exact BWA-MEM3 companions
+Reused auxiliary files retain their original paths and are passed directly downstream,
+not copied into helper tasks or republished. Only the five exact BWA-MEM3 auxiliary files
 are passed, not their parent directory. Normal Nextflow task caching and `-resume`
 apply to generated indexes and downstream tasks without reference `storeDir`
 caching. Tasks consume reference channels, not the published copies.

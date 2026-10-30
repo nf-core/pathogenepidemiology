@@ -126,5 +126,5 @@ nextflow_workflow {
     }
 
     // TODO: Real binary index integrity/checksums, download contents and URL-sensitive resume.
-    // TODO: Complete/partial adjacent BWA sets, adjacent MMI and invalid companion paths need suitable static fixtures.
+    // TODO: Complete/partial adjacent BWA sets, adjacent MMI and invalid auxiliary file paths need suitable static fixtures.
 }

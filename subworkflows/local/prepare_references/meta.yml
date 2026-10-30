@@ -21,7 +21,7 @@ input:
       description: Optional URL of the plain or gzip-compressed host reference, used when host_fasta is absent.
   - query_fasta:
       type: string
-      description: Optional existing local FASTA overriding queryurl; exact adjacent uncompressed-name .fai, .dict, .mmi and complete BWA-MEM3 companions are reused.
+      description: Optional existing local FASTA overriding queryurl; exact adjacent uncompressed-name .fai, .dict, .mmi and complete BWA-MEM3 auxiliary files are reused.
   - host_fasta:
       type: string
       description: Optional existing local .fa, .fasta or .fna file (optionally .gz), overriding hosturl.
@@ -37,5 +37,5 @@ output:
   - querymmi:
       description: "Selected or built minimap2 index. Structure: [ val(meta), path(mmi) ]"
   - querybwamem3:
-      description: "Five exact original BWA-MEM3 companion paths or a generated index directory. Structure: [ val(meta), path(index) ]"
+      description: "Five exact original BWA-MEM3 auxiliary file paths or a generated index directory. Structure: [ val(meta), path(index) ]"
 authors: []

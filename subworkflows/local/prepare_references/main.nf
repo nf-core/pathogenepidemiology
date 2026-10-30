@@ -39,26 +39,26 @@ workflow PREPARE_REFERENCES {
     // Explicit local files take precedence independently; validate before launching tasks.
     def local_query = query_fasta != null ? localReference(query_fasta, 'query_fasta') : null
     def local_host = host_fasta != null ? localReference(host_fasta, 'host_fasta') : null
-    def companions = [:]
+    def auxiliaryFiles = [:]
     if (local_query != null) {
         def reference = local_query[1]
         def plain = reference.name.replaceFirst(/\.gz$/, '')
         def stem = plain.replaceFirst(/\.(fa|fasta|fna)$/, '')
-        companions.fai = file(reference.resolveSibling("${plain}.fai"), checkIfExists: false, glob: false)
-        companions.dict = file(reference.resolveSibling("${stem}.dict"), checkIfExists: false, glob: false)
-        companions.mmi = file(reference.resolveSibling("${stem}.mmi"), checkIfExists: false, glob: false)
+        auxiliaryFiles.fai = file(reference.resolveSibling("${plain}.fai"), checkIfExists: false, glob: false)
+        auxiliaryFiles.dict = file(reference.resolveSibling("${stem}.dict"), checkIfExists: false, glob: false)
+        auxiliaryFiles.mmi = file(reference.resolveSibling("${stem}.mmi"), checkIfExists: false, glob: false)
         def bwa = ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].collect {
             file(reference.resolveSibling("${plain}.${it}"), checkIfExists: false, glob: false)
         }
-        // A present but invalid companion (including a broken symlink) is an input error.
-        (companions.values() + bwa).each { asset ->
+        // A present but invalid auxiliary file (including a broken symlink) is an input error.
+        (auxiliaryFiles.values() + bwa).each { asset ->
             if (java.nio.file.Files.exists(asset, java.nio.file.LinkOption.NOFOLLOW_LINKS) &&
                 (!asset.isFile() || !java.nio.file.Files.isReadable(asset))) {
-                error "Reference companion must be a regular readable file: ${asset}"
+                error "Reference auxiliary file must be a regular readable file: ${asset}"
             }
         }
         // BWA indexes are atomic: never mix supplied and rebuilt sidecars.
-        companions.bwa = bwa.every { it.exists() } ? bwa : null
+        auxiliaryFiles.bwa = bwa.every { it.exists() } ? bwa : null
     }
     def query = local_query != null ? local_query : referenceUriToTuple(queryurl)
     def host = local_host != null ? local_host : (hosturl ? referenceUriToTuple(hosturl) : null)
@@ -77,19 +77,19 @@ workflow PREPARE_REFERENCES {
     def query_gzip = local_query != null ? query[1].extension == 'gz' : query[2] == 'gz'
     queryfasta = (query_gzip ? GUNZIP_QUERYFASTA(ch_query).gunzip : ch_query)
         .map { meta, fasta -> tuple([id: fasta.baseName], fasta) }
-    queryfai = companions.fai?.exists()
-        ? queryfasta.map { meta, fasta -> tuple(meta, companions.fai) }
+    queryfai = auxiliaryFiles.fai?.exists()
+        ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.fai) }
         : SAMTOOLS_FAIDX(queryfasta.map { meta, fasta -> tuple(meta, fasta, []) }, false).fai
-    querydict = companions.dict?.exists()
-        ? queryfasta.map { meta, fasta -> tuple(meta, companions.dict) }
+    querydict = auxiliaryFiles.dict?.exists()
+        ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.dict) }
         : GATK4_CREATESEQUENCEDICTIONARY(queryfasta).dict
-    querymmi = companions.mmi?.exists()
-        ? queryfasta.map { meta, fasta -> tuple(meta, companions.mmi) }
+    querymmi = auxiliaryFiles.mmi?.exists()
+        ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.mmi) }
         : MINIMAP2_INDEX(queryfasta).index
     // BWAMEM3_MEM accepts path collections as well as generated index directories.
-    // Stage only the exact five companions, never their parent with unrelated indexes.
-    querybwamem3 = companions.bwa != null
-        ? queryfasta.map { meta, fasta -> tuple(meta, companions.bwa) }
+    // Stage only the exact five auxiliary files, never their parent with unrelated indexes.
+    querybwamem3 = auxiliaryFiles.bwa != null
+        ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.bwa) }
         : BWAMEM3_INDEX(queryfasta).index
 
     emit:
