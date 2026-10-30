@@ -7,18 +7,6 @@ include { GATK4_CREATESEQUENCEDICTIONARY } from '../../../modules/nf-core/gatk4/
 include { MINIMAP2_INDEX } from '../../../modules/nf-core/minimap2/index/main'
 include { BWAMEM3_INDEX } from '../../../modules/nf-core/bwamem3/index/main'
 
-def adjacentReference(reference, name) {
-    def asset = reference.resolveSibling(name)
-    // A present but invalid companion is an input error, not a cache miss.
-    if (java.nio.file.Files.exists(asset, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
-        if (!java.nio.file.Files.isRegularFile(asset) || !java.nio.file.Files.isReadable(asset)) {
-            error "Reference companion must be a regular readable file: ${asset}"
-        }
-        return asset
-    }
-    return null
-}
-
 def localReference(value, option) {
     if (!(value instanceof CharSequence) || value.contains('://') || !(value ==~ /.+\.(fa|fasta|fna)(\.gz)?/)) {
         error "--${option} must be a single local FASTA file (.fa, .fasta or .fna, optionally .gz)."
@@ -56,14 +44,21 @@ workflow PREPARE_REFERENCES {
         def reference = local_query[1]
         def plain = reference.name.replaceFirst(/\.gz$/, '')
         def stem = plain.replaceFirst(/\.(fa|fasta|fna)$/, '')
-        companions.fai = adjacentReference(reference, "${plain}.fai")
-        companions.dict = adjacentReference(reference, "${stem}.dict")
-        companions.mmi = adjacentReference(reference, "${stem}.mmi")
+        companions.fai = file(reference.resolveSibling("${plain}.fai"), checkIfExists: false, glob: false)
+        companions.dict = file(reference.resolveSibling("${stem}.dict"), checkIfExists: false, glob: false)
+        companions.mmi = file(reference.resolveSibling("${stem}.mmi"), checkIfExists: false, glob: false)
         def bwa = ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].collect {
-            adjacentReference(reference, "${plain}.${it}")
+            file(reference.resolveSibling("${plain}.${it}"), checkIfExists: false, glob: false)
+        }
+        // A present but invalid companion (including a broken symlink) is an input error.
+        (companions.values() + bwa).each { asset ->
+            if (java.nio.file.Files.exists(asset, java.nio.file.LinkOption.NOFOLLOW_LINKS) &&
+                (!asset.isFile() || !java.nio.file.Files.isReadable(asset))) {
+                error "Reference companion must be a regular readable file: ${asset}"
+            }
         }
         // BWA indexes are atomic: never mix supplied and rebuilt sidecars.
-        companions.bwa = bwa.every { it != null } ? bwa : null
+        companions.bwa = bwa.every { it.exists() } ? bwa : null
     }
     def query = local_query != null ? local_query : referenceUriToTuple(queryurl)
     def host = local_host != null ? local_host : (hosturl ? referenceUriToTuple(hosturl) : null)
@@ -82,13 +77,13 @@ workflow PREPARE_REFERENCES {
     def query_gzip = local_query != null ? query[1].extension == 'gz' : query[2] == 'gz'
     queryfasta = (query_gzip ? GUNZIP_QUERYFASTA(ch_query).gunzip : ch_query)
         .map { meta, fasta -> tuple([id: fasta.baseName], fasta) }
-    queryfai = companions.fai != null
+    queryfai = companions.fai?.exists()
         ? queryfasta.map { meta, fasta -> tuple(meta, companions.fai) }
         : SAMTOOLS_FAIDX(queryfasta.map { meta, fasta -> tuple(meta, fasta, []) }, false).fai
-    querydict = companions.dict != null
+    querydict = companions.dict?.exists()
         ? queryfasta.map { meta, fasta -> tuple(meta, companions.dict) }
         : GATK4_CREATESEQUENCEDICTIONARY(queryfasta).dict
-    querymmi = companions.mmi != null
+    querymmi = companions.mmi?.exists()
         ? queryfasta.map { meta, fasta -> tuple(meta, companions.mmi) }
         : MINIMAP2_INDEX(queryfasta).index
     // BWAMEM3_MEM accepts path collections as well as generated index directories.
