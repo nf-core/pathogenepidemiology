@@ -6,12 +6,6 @@ include { SAMTOOLS_FAIDX } from '../../../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
 include { MINIMAP2_INDEX } from '../../../modules/nf-core/minimap2/index/main'
 include { BWAMEM3_INDEX } from '../../../modules/nf-core/bwamem3/index/main'
-include {
-    REUSE_REFERENCE as REUSE_QUERYFAI
-    REUSE_REFERENCE as REUSE_QUERYDICT
-    REUSE_REFERENCE as REUSE_QUERYMMI
-    REUSE_BWAMEM3
-} from '../../../modules/local/reuse_reference/main'
 
 def adjacentReference(reference, name) {
     def asset = reference.resolveSibling(name)
@@ -89,16 +83,18 @@ workflow PREPARE_REFERENCES {
     queryfasta = (query_gzip ? GUNZIP_QUERYFASTA(ch_query).gunzip : ch_query)
         .map { meta, fasta -> tuple([id: fasta.baseName], fasta) }
     queryfai = companions.fai != null
-        ? REUSE_QUERYFAI(queryfasta.map { meta, fasta -> tuple(meta, companions.fai, companions.fai.name) }).reference
+        ? queryfasta.map { meta, fasta -> tuple(meta, companions.fai) }
         : SAMTOOLS_FAIDX(queryfasta.map { meta, fasta -> tuple(meta, fasta, []) }, false).fai
     querydict = companions.dict != null
-        ? REUSE_QUERYDICT(queryfasta.map { meta, fasta -> tuple(meta, companions.dict, companions.dict.name) }).reference
+        ? queryfasta.map { meta, fasta -> tuple(meta, companions.dict) }
         : GATK4_CREATESEQUENCEDICTIONARY(queryfasta).dict
     querymmi = companions.mmi != null
-        ? REUSE_QUERYMMI(queryfasta.map { meta, fasta -> tuple(meta, companions.mmi, companions.mmi.name) }).reference
+        ? queryfasta.map { meta, fasta -> tuple(meta, companions.mmi) }
         : MINIMAP2_INDEX(queryfasta).index
+    // BWAMEM3_MEM accepts path collections as well as generated index directories.
+    // Stage only the exact five companions, never their parent with unrelated indexes.
     querybwamem3 = companions.bwa != null
-        ? REUSE_BWAMEM3(queryfasta.map { meta, fasta -> tuple(meta, companions.bwa) }).index
+        ? queryfasta.map { meta, fasta -> tuple(meta, companions.bwa) }
         : BWAMEM3_INDEX(queryfasta).index
 
     emit:

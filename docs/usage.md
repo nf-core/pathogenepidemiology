@@ -60,13 +60,15 @@ user's responsibility. No host indexes are required, discovered or built.
 
 Downloaded references use the pinned nf-core WGET module; gzip decompression
 uses nf-core GUNZIP and indexing uses SAMTOOLS_FAIDX.
-Downloaded references, decompressed files and the query index are
-published under `results/download` (or `<outdir>/download`). Selected or built
+Downloaded references, decompressed files and generated query FASTA indexes are
+published under `results/download` (or `<outdir>/download`). Generated
 dictionaries publish under `<outdir>/gatk4`, minimap2 indexes under `<outdir>/mm2i`,
-and the five BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
-Reused indexes are staged as cacheable task outputs; normal Nextflow `-resume`
-applies without reference `storeDir` caching. Tasks consume
-their output channels, not the published copies.
+and the five generated BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
+Reused companions retain their original paths and are passed directly downstream,
+not copied into helper tasks or republished. Only the five exact BWA-MEM3 companions
+are passed, not their parent directory. Normal Nextflow task caching and `-resume`
+apply to generated indexes and downstream tasks without reference `storeDir`
+caching. Tasks consume reference channels, not the published copies.
 Reference outputs remain reusable value channels shared by all samples and intervals;
 when neither a local host file nor a host URL is supplied, an empty path value
 skips the host download. Use distinct reference basenames to avoid publication

@@ -64,14 +64,17 @@ nextflow_workflow {
             assert file(workflow.out.querydict[0][1]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict'
             assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_') || it.name.contains('GUNZIP_') }
             assert !workflow.trace.tasks().any { it.name.contains('SAMTOOLS_FAIDX') || it.name.contains('CREATESEQUENCEDICTIONARY') }
-            assert workflow.trace.tasks().count { it.name.contains('REUSE_QUERYFAI') } == 1
-            assert workflow.trace.tasks().count { it.name.contains('REUSE_QUERYDICT') } == 1
-            assert file(workflow.out.queryfai[0][1]).text == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").text
-            assert file(workflow.out.querydict[0][1]).text == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").text
+            assert workflow.trace.tasks().size() == 2
+            assert file(workflow.out.queryfai[0][1]) == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai")
+            assert file(workflow.out.querydict[0][1]) == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict")
             assert workflow.trace.tasks().count { it.name.contains('MINIMAP2_INDEX') } == 1
             assert workflow.trace.tasks().count { it.name.contains('BWAMEM3_INDEX') } == 1
-            assert file("$outputDir/gatk4/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").exists()
-            assert file("$outputDir/download/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").exists()
+            assert !file("$outputDir/gatk4/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").exists()
+            assert !file("$outputDir/download/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").exists()
+            assert file("$outputDir/mm2i/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.mmi").exists()
+            ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].each { suffix ->
+                assert file("$outputDir/bw3i/bwamem3/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.$suffix").exists()
+            }
         }
     }
 
@@ -96,6 +99,10 @@ nextflow_workflow {
             assert !workflow.trace.tasks().any { it.name.contains('SAMTOOLS_FAIDX') || it.name.contains('CREATESEQUENCEDICTIONARY') }
             assert file(workflow.out.queryfai[0][1]).name.endsWith('.fa.fai')
             assert !file(workflow.out.queryfai[0][1]).name.endsWith('.gz.fai')
+            assert file(workflow.out.queryfai[0][1]) == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai")
+            assert file(workflow.out.querydict[0][1]) == file("${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict")
+            assert !file("$outputDir/download/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai").exists()
+            assert !file("$outputDir/gatk4/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict").exists()
         }
     }
 

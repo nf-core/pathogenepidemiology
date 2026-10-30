@@ -12,7 +12,6 @@ components:
   - gatk4/createsequencedictionary
   - minimap2/index
   - bwamem3/index
-  - reuse_reference
 input:
   - queryurl:
       type: string
@@ -38,5 +37,5 @@ output:
   - querymmi:
       description: "Selected or built minimap2 index. Structure: [ val(meta), path(mmi) ]"
   - querybwamem3:
-      description: "Selected or built BWA-MEM3 index directory containing only its five sidecars. Structure: [ val(meta), path(index) ]"
+      description: "Five exact original BWA-MEM3 companion paths or a generated index directory. Structure: [ val(meta), path(index) ]"
 authors: []
