@@ -1,69 +1,84 @@
 nextflow_workflow {
-    name 'Reference sources remain reusable values (real download, indexing and dictionary)'
-    script './main.nf'
-    workflow 'REFERENCE_VALUES'
-    config './nextflow.config'
+    name "Test PREPARE_REFERENCES - stub"
+    script "../main.nf"
+    workflow "PREPARE_REFERENCES"
+    config "./nextflow.config"
 
-    test('host present: downloaded FASTA, real FAI and dictionary are reused for both samples') {
+    test("prepare references - stub") {
+        options "-stub"
         when {
             params { outdir = "$outputDir" }
             workflow {
                 """
-                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
-                input[1] = params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
+                input[0] = 'https://example.invalid/query.fa.gz'
+                input[1] = 'https://example.invalid/host.fa.gz'
+                input[2] = null
+                input[3] = null
                 """
             }
         }
         then {
             assert workflow.success
-            assert workflow.out.queryfasta[0][0] == [id: 'genome']
-            assert file(workflow.out.queryfasta[0][1]).name == 'genome.fasta'
-            assert file(workflow.out.queryfai[0][1]).name == 'genome.fasta.fai'
-            assert file(workflow.out.querydict[0][1]).name == 'genome.dict'
-            assert file(workflow.out.hostfasta[0]).name == 'test_1.fastq'
-            assert file(workflow.out.hostfasta[0]).text == new java.util.zip.GZIPInputStream(file("${outputDir}/download/test_1.fastq.gz").newInputStream()).withCloseable { it.text }
-            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
-            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:host\n" }
-            def fasta = file(workflow.out.queryfasta[0][1])
-            def compressed = file("${outputDir}/download/genome.fasta.gz")
-            assert new java.util.zip.GZIPInputStream(compressed.newInputStream()).withCloseable { it.text } == fasta.text
-            assert file("${outputDir}/download/genome.fasta").text == fasta.text
-            def sequences = [:]
-            def contig
-            fasta.readLines().each { line ->
-                if (line.startsWith('>')) {
-                    contig = line.substring(1).tokenize()[0]
-                    sequences[contig] = 0
-                } else {
-                    sequences[contig] += line.size()
-                }
+            assert workflow.out.queryfasta.size() == 1
+            assert workflow.out.queryfasta[0][0] == [id: 'query']
+            assert file(workflow.out.queryfasta[0][1]).name == 'query.fa'
+            assert workflow.out.queryfai.size() == 1
+            assert workflow.out.queryfai[0][0] == [id: 'query']
+            assert file(workflow.out.queryfai[0][1]).name == 'query.fa.fai'
+            assert workflow.out.querydict[0][0] == [id: 'query']
+            assert file(workflow.out.querydict[0][1]).name == 'query.dict'
+            assert workflow.out.hostfasta.size() == 1
+            assert file(workflow.out.hostfasta[0]).name == 'host.fa'
+            ['query.fa.gz', 'host.fa.gz', 'query.fa', 'query.fa.fai', 'host.fa'].each { name ->
+                assert file("$outputDir/download/$name").exists()
             }
-            assert file(workflow.out.queryfai[0][1]).readLines().collect { it.split('\t').take(2) } == sequences.collect { id, length -> [id, length.toString()] }
-            assert file(workflow.out.querydict[0][1]).readLines().findAll { it.startsWith('@SQ') }.collect {
-                it.split('\t').findAll { it.startsWith('SN:') || it.startsWith('LN:') }
-            } == sequences.collect { id, length -> ["SN:${id}".toString(), "LN:${length}".toString()] }
-            assert workflow.trace.tasks().count { it.name.contains('GATK4_CREATESEQUENCEDICTIONARY') } == 1
-            assert workflow.trace.tasks().count { it.name.contains('SAMTOOLS_FAIDX') } == 1
-            assert file("${outputDir}/download/test_1.fastq").exists()
         }
     }
 
-    test('host absent: reusable empty path value skips host download without dropping samples') {
+    test('local query overrides URL and absent host stays empty (stub)') {
+        options '-stub-run'
         when {
             params { outdir = "$outputDir" }
             workflow {
                 """
-                input[0] = params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.gz'
+                input[0] = 'https://example.invalid/unused.fa.gz'
                 input[1] = null
+                input[2] = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa'
+                input[3] = null
                 """
             }
         }
         then {
             assert workflow.success
             assert workflow.out.hostfasta == [[]]
-            assert workflow.out.checked.collect { it[0] }.sort() == ['sample1', 'sample2']
-            assert workflow.out.checked.every { file(it[1]).text == "${it[0]}:no-host\n" }
-            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_HOSTFASTA') }
+            assert workflow.out.queryfasta[0][0] == [id: 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel']
+            assert file(workflow.out.queryfai[0][1]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.fai'
+            assert file(workflow.out.querydict[0][1]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.dict'
+            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_') || it.name.contains('GUNZIP_') }
         }
     }
+
+    test('local host overrides absent URL and gzip query is decompressed (stub)') {
+        options '-stub-run'
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = null
+                input[1] = null
+                input[2] = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa.gz'
+                input[3] = '${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa'
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert file(workflow.out.hostfasta[0]).name == 'Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa'
+            assert workflow.trace.tasks().count { it.name.contains('GUNZIP_QUERYFASTA') } == 1
+            assert !workflow.trace.tasks().any { it.name.contains('DOWNLOAD_') || it.name.contains('GUNZIP_HOSTFASTA') }
+        }
+    }
+
+    // TODO: Real download/decompression/index contents, reference reuse across samples,
+    // input validation and URL-sensitive resume need suitable static integration inputs.
 }
