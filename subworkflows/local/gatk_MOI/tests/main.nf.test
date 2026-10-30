@@ -2,11 +2,12 @@ nextflow_workflow {
     name 'Test Subworkflow GATK_MOI'
     script '../main.nf'
     workflow 'GATK_MOI'
-    options '-stub-run'
 
     // Module-provided stubs test wiring, not variant calling or VQSR.
-    // The downloaded BAM is only staged; its reference need not match in stub mode.
+    // Stubs only stage the alignment path, so a tracked file is sufficient here.
     test('two samples and two contigs produce a cohort and per-sample QC (stub)') {
+        options '-stub-run'
+        tag 'stub'
         when {
             params {
                 outdir = "$outputDir"
@@ -15,14 +16,15 @@ nextflow_workflow {
                 """
                 def assets = '${projectDir}/assets'
                 def reference = assets + '/Plasmodium_falciparum.GCA000002765v3.dna.toplevel'
-                def bam = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.single_end.sorted.bam', checkIfExists: true)
+                def bam = file(assets + '/Pf3D7_core.bed', checkIfExists: true)
                 input[0] = Channel.of(tuple([id: 'sample1'], bam), tuple([id: 'sample2'], bam))
                 input[1] = Channel.value(tuple([id: 'query'], file(reference + '.fa', checkIfExists: true)))
                 input[2] = Channel.value(tuple([id: 'query'], file(reference + '.fa.fai', checkIfExists: true)))
-                input[3] = Channel.value(file(assets + '/Strains.2kb.vcf.gz', checkIfExists: true))
-                input[4] = Channel.value(file(assets + '/Strains.2kb.vcf.gz.tbi', checkIfExists: true))
-                input[5] = Channel.value(file(assets + '/Pf3D7_core.bed', checkIfExists: true))
-                input[6] = Channel.of(
+                input[3] = Channel.value(tuple([id: 'query'], file(reference + '.dict', checkIfExists: true)))
+                input[4] = Channel.value(file(assets + '/Strains.2kb.vcf.gz', checkIfExists: true))
+                input[5] = Channel.value(file(assets + '/Strains.2kb.vcf.gz.tbi', checkIfExists: true))
+                input[6] = Channel.value(file(assets + '/Pf3D7_core.bed', checkIfExists: true))
+                input[7] = Channel.of(
                     tuple([id: 'Pf3D7_01_v3'], file(assets + '/intervals/core_chr1.list', checkIfExists: true)),
                     tuple([id: 'Pf3D7_02_v3'], file(assets + '/intervals/core_chr2.list', checkIfExists: true))
                 )
@@ -32,8 +34,10 @@ nextflow_workflow {
 
         then {
             assert workflow.success
+            assert !workflow.trace.tasks().any { it.name.contains('CREATESEQUENCEDICTIONARY') }
             assert workflow.out.varcalls_s.size() == 1
             assert workflow.out.varcalls_s[0][0] == [id: 'cohort']
+            assert workflow.trace.tasks().count { it.name.contains('GATK_MOI:BCFTOOLS_CONCAT (') } == 1
             assert file(workflow.out.varcalls_s[0][1]).name == 'cohort.bcf.gz'
             assert file(workflow.out.varcalls_s[0][2]).name == 'cohort.bcf.gz.csi'
             [workflow.out.insert_size_metrics, workflow.out.mosdepth_summary, workflow.out.mosdepth_global].each { channel ->
@@ -48,4 +52,6 @@ nextflow_workflow {
             ]
         }
     }
+
+    // TODO: Test real VCF concatenation, including record order, sample preservation and index usability.
 }
