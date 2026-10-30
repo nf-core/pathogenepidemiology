@@ -1,0 +1,35 @@
+nextflow_process {
+    name "Test Process BCFTOOLS_CONSENSUS per-sample genotype selection"
+    script "../../../../modules/nf-core/bcftools/consensus/main.nf"
+    process "BCFTOOLS_CONSENSUS"
+    config "./nextflow.config"
+
+    // data/two_samples.vcf.gz holds two haploid samples on the sarscov2 genome:
+    //   MT192765.1  100  A>G  sample_a=1  sample_b=0
+    //   MT192765.1  200  C>T  sample_a=0  sample_b=1
+    test("Each consensus uses the genotype of the sample named in meta.id") {
+        when {
+            process {
+                """
+                def vcf   = file("${moduleTestDir}/data/two_samples.vcf.gz", checkIfExists: true)
+                def tbi   = file("${moduleTestDir}/data/two_samples.vcf.gz.tbi", checkIfExists: true)
+                def fasta = file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                input[0] = Channel.of('sample_a', 'sample_b')
+                    .map { id -> tuple([id: id], vcf, tbi, fasta, []) }
+                """
+            }
+        }
+
+        then {
+            // Bases at positions 100 and 200 of each consensus
+            def bases = process.out.fasta.collectEntries { meta, fa ->
+                def seq = path(fa).readLines().findAll { line -> !line.startsWith('>') }.join()
+                [ (meta.id): seq[99] + seq[199] ]
+            }
+            assertAll(
+                { assert process.success },
+                { assert bases == [sample_a: 'GC', sample_b: 'AT'] }
+            )
+        }
+    }
+}
