@@ -57,7 +57,7 @@ workflow PREPARE_REFERENCES {
                 error "Reference auxiliary file must be a regular readable file: ${asset}"
             }
         }
-        // BWA indexes are atomic: never mix supplied and rebuilt sidecars.
+        // Treat BWA indexes as a complete set: never mix supplied and rebuilt auxiliary files.
         auxiliaryFiles.bwa = bwa.every { it.exists() } ? bwa : null
     }
     def query = local_query != null ? local_query : referenceUriToTuple(queryurl)
