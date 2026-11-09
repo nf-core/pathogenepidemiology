@@ -15,8 +15,12 @@ VCFs remain paired with their indexes. Each contig has one calling BED and one
 cohort VCF: `chr1.vcf.gz` (or `chr1.snp.recal.vcf.gz` after VQSR).
 Per-sample GVCFs are named `sample.chr1.g.vcf.gz`; the final cohort name is unchanged.
 Duplicate contigs across interval files cause a workflow error before conversion.
-The concat module still sorts filenames lexicographically (`chr1`, `chr10`, `chr2`),
-not by reference or natural chromosome order.
+`GATK_MOI` collects the indexed VQSR and bypass outputs directly into one cohort.
+The nf-core `BCFTOOLS_CONCAT` wrapper sorts input VCF filenames lexicographically
+(`chr1`, `chr10`, `chr2`) before invoking `bcftools concat`; the executable does
+not perform this sorting. The pipeline assumes this filename order is the intended
+concatenation order, not reference-index or natural chromosome order. Original VCF
+and index filenames are retained without numbered staging aliases.
 
 ## Pipeline overview
 

@@ -2,10 +2,8 @@
 include { PREPARE_REFERENCES   } from '../subworkflows/local/prepare_references'
 include { PREPARE_INTERVALS    } from '../subworkflows/local/prepare_intervals/main'
 include { PREPROCESS_READS     } from '../subworkflows/local/preprocess_reads'
-include { MINIMAP2_INDEX       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN       } from '../modules/nf-core/minimap2/align/main'
 include { MULTIQC              } from '../modules/nf-core/multiqc/main'
-include { BWAMEM3_INDEX        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM          } from '../modules/nf-core/bwamem3/mem/main'
 include {
   SAMTOOLS_STATS as SAMTOOLS_STATS_MM2
@@ -24,7 +22,9 @@ workflow {
   // DOWNLOAD AND INDEX REFERENCE FASTA FILES
   PREPARE_REFERENCES(
     params.queryurl,
-    params.hosturl
+    params.hosturl,
+    params.query_fasta,
+    params.host_fasta
   )
 
   ch_queryfasta = PREPARE_REFERENCES.out.queryfasta
@@ -63,11 +63,10 @@ workflow {
 
 
   // Alignment of long reads
-  minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
-  //minimap2_index = MINIMAP2_INDEX(ch_queryfasta)
+  minimap2_index = PREPARE_REFERENCES.out.querymmi
   aligned_l = MINIMAP2_ALIGN(
     ch_samples_l,
-    minimap2_index.index.first(),      // reference as tuple
+    minimap2_index,      // reusable reference tuple
     true,                                                                    // bam_format
     'bai',                                                                   // bam_index_extension
     false,                                                                   // cigar_paf_format
@@ -99,10 +98,10 @@ workflow {
     }
 
   // Alignment of short reads
-  bwamem3_index = BWAMEM3_INDEX(ch_queryfasta)
+  bwamem3_index = PREPARE_REFERENCES.out.querybwamem3
   aligned_s = BWAMEM3_MEM(
     ch_samples_s,
-    bwamem3_index.index.first(),
+    bwamem3_index,
     ch_queryfasta.first(),
     true                                    // sort the bam for gatk
     )
@@ -121,6 +120,7 @@ workflow {
     ch_wgs_bam_s,
     ch_queryfasta,
     ch_queryfai,
+    PREPARE_REFERENCES.out.querydict,
     // TODO: launchDir -> baseDir when this is exec'd through pipeline main script
     channel.value(file("${launchDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)),
     channel.value(file("${launchDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)),

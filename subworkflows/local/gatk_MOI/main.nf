@@ -5,14 +5,13 @@
 
 include { GATK4_CLEANSAM                                     } from '../../../modules/nf-core/gatk4/cleansam/main'
 include { PICARD_SORTSAM                                     } from '../../../modules/nf-core/picard/sortsam/main'
-include { GATK4_CREATESEQUENCEDICTIONARY                     } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
 include { GATK4_MARKDUPLICATES_CUSTOM                        } from '../../../modules/local/gatk4/markduplicates_custom/main'
 include { MOSDEPTH                                           } from '../../../modules/nf-core/mosdepth/main'
 include { PICARD_COLLECTINSERTSIZEMETRICS                    } from '../../../modules/nf-core/picard/collectinsertsizemetrics/main'
 include { GATK4_HAPLOTYPECALLER                              } from '../../../modules/nf-core/gatk4/haplotypecaller/main'
 include { GATK4_GENOMICSDBIMPORT                             } from '../../../modules/nf-core/gatk4/genomicsdbimport/main'
 include { GATK4_GENOTYPEGVCFS                                } from '../../../modules/nf-core/gatk4/genotypegvcfs/main'
-include { CONCAT_COHORT                                      } from '../concat_cohort/main'
+include { BCFTOOLS_CONCAT                                    } from '../../../modules/nf-core/bcftools/concat/main'
 include {
     GATK4_VARIANTRECALIBRATOR as GATK4_VARRECAL_INDELS
 } from '../../../modules/nf-core/gatk4/variantrecalibrator/main'
@@ -32,16 +31,13 @@ workflow GATK_MOI {
     ch_aligned_s
     ch_queryfasta
     ch_queryfai
+    ch_querydict
     ch_vqsr_resource
     ch_vqsr_resource_tbi
     ch_core_bed
     ch_intervals
 
     main:
-
-    GATK4_CREATESEQUENCEDICTIONARY(ch_queryfasta)
-
-    ch_querydict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
 
     ch_fasta_val = ch_queryfasta.map { _meta, fasta -> fasta }
     ch_fai_val = ch_queryfai.map { _meta, fai -> fai }
@@ -179,9 +175,16 @@ workflow GATK_MOI {
 
     ch_vqsr_output = GATK4_VQSR_SNPS.out.vcf.join(GATK4_VQSR_SNPS.out.tbi, by: 0)
 
-    CONCAT_COHORT(ch_vqsr_output.mix(ch_bypass_vcf), ch_queryfai)
+    ch_cohort = ch_vqsr_output.mix(ch_bypass_vcf)
+        .collect(flat: false)
+        .map { items ->
+            tuple([id: 'cohort'], items.collect { item -> item[1] }, items.collect { item -> item[2] })
+        }
 
-    varcalls_s = CONCAT_COHORT.out.vcf.join(CONCAT_COHORT.out.index, by: 0)
+    // The nf-core wrapper sorts the original VCF filenames lexicographically.
+    BCFTOOLS_CONCAT(ch_cohort)
+
+    varcalls_s = BCFTOOLS_CONCAT.out.vcf.join(BCFTOOLS_CONCAT.out.index, by: 0)
 
     emit:
     varcalls_s          = varcalls_s
