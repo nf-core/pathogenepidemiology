@@ -18,9 +18,16 @@ nextflow_workflow {
                         []
                     )
                 )
-                """
+                input[1] = Channel.of(
+                    tuple(
+                        [id: 'reference'],
+                        file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta.fai', checkIfExists: true)
+                    )
+                )
+ """
             }
         }
+
 
         then {
             assertAll(
