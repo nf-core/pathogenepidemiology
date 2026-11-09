@@ -139,7 +139,7 @@ workflow {
         tuple(sample_meta, bcf, csi, fasta, [])
     }
 
-  PHYLOGENY(ch_consensus_input)
+  PHYLOGENY(ch_consensus_input, ch_queryfai)
 
   // TODO: MERGE varcalls_l AND varcalls_s CHANNELS // maybe fixed because a new channel can be made from a dir with all
 /*
