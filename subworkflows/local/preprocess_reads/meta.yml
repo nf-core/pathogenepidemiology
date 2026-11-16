@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: preprocess_reads
+description: Run FastQC, trim adapters with BBDuk and filter reads against the host reference.
+keywords:
+  - quality control
+  - trimming
+  - filtering
+components:
+  - fastqc
+  - bbduk_custom
+input:
+  - ch_samples:
+      description: "Sample metadata and reads. Structure: [ val(meta), path(reads) ]; meta includes single_end and instrument_platform."
+  - ch_hostfasta:
+      description: Host reference files; the first file is used for filtering, or no reference if the channel is empty.
+output:
+  - reads_clean:
+      description: "Filtered reads. Structure: [ val(meta), path(reads) ]"
+  - bbduk_stats:
+      description: "Trimming and filtering statistics. Structure: [ val(meta), path(stats) ]"
+  - bbduk_logs:
+      description: "Trimming and filtering logs. Structure: [ val(meta), path(log) ]"
+  - bbduk_dropped:
+      description: "Reads discarded during filtering. Structure: [ val(meta), path(reads) ]"
+  - trim_dropped:
+      description: "Reads discarded during trimming. Structure: [ val(meta), path(reads) ]"
+  - samples:
+      description: "Original samples with instrument platform. Structure: [ val(meta), path(reads), val(instrument_platform) ]"
+  - fastqc:
+      description: "FastQC ZIP reports. Structure: [ val(meta), path(zip) ]"
+authors: []

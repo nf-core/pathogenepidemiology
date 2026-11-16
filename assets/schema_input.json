@@ -2,15 +2,15 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/pathogenepidemiology/main/assets/schema_input.json",
     "title": "nf-core/pathogenepidemiology pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "description": "Schema for the file provided with params.input. Only the columns required to import and route the reads are declared; any additional columns in the samplesheet (e.g. ENA metadata appended by nf-core/fetchngs) are ignored.",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
-            "sample": {
+            "run_accession": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "errorMessage": "Run accession (e.g. ERR123456) must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
             "fastq_1": {
@@ -26,8 +26,18 @@
                 "exists": true,
                 "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+            },
+            "library_strategy": {
+                "type": "string",
+                "errorMessage": "library_strategy must be provided (e.g. WGS, AMPLICON)",
+                "meta": ["library_strategy"]
+            },
+            "instrument_platform": {
+                "type": "string",
+                "errorMessage": "instrument_platform must be provided (e.g. ILLUMINA, OXFORD_NANOPORE, DNBSEQ)",
+                "meta": ["instrument_platform"]
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["run_accession", "fastq_1", "library_strategy", "instrument_platform"]
     }
 }

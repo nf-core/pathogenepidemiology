@@ -1,0 +1,24 @@
+{
+    "trim then filter reads": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "paired",
+                        "single_end": false,
+                        "instrument_platform": "ILLUMINA"
+                    },
+                    [
+                        "paired_1_filtered.fastq.gz:md5,e3da014fbb9b428e952c62e8f0fb6402",
+                        "paired_2_filtered.fastq.gz:md5,2ebae722295ea66d84075a3b042e2b42"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-23T20:19:47.098480876",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.3"
+        }
+    }
+}

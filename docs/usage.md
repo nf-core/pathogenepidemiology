@@ -8,6 +8,86 @@
 
 <!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
+### Read preprocessing
+
+Preprocessing invokes the single local `bbduk_custom` module twice under
+distinct aliases, creating two BBDuk tasks per sample: `BBDUK_TRIM` trims against
+`assets/adapters.fa` only (`ktrim=r`), then `BBDUK_FILTER` filters against
+the built-in PhiX reference plus the supplied host reference (`ktrim=f`).
+Adapter-only options (`mink`, `tpe`, `tbo`) and the trimming minimum length
+remain in the first task. Trimming retains its existing arguments. Filtering
+uses `ktrim=f k=31 hdist=0 qhdist=0 speed=0`; compared with the earlier
+two-stage filtering command (`ktrim=f k=23 prealloc=t qhdist=1 speed=2 -da`),
+this changes k-mer length and matching/search settings and removes `prealloc=t`
+and `-da`. The stage split and these filtering parameter changes are distinct
+changes; read retention alone does not establish filtering specificity.
+
+The preprocessing subworkflow accepts an empty contaminant channel or `[]`
+for PhiX-only filtering, or a path/list of paths for additional references.
+The full pipeline obtains the host reference from `--host_fasta` or `hosturl`.
+
+### Reference FASTA inputs
+
+Use `--query_fasta /path/reference.fa` and/or `--host_fasta /path/host.fa.gz`
+to supply local references. Both parameters are optional and independent:
+each supplied file skips its corresponding `queryurl` or `hosturl` download;
+omitting either file retains that URL's configured default.
+
+Each parameter accepts one existing file with extension `.fa`, `.fasta` or
+`.fna`, optionally compressed with gzip (`.gz`). Local file basenames must start
+with a letter, digit or underscore and contain only ASCII letters, digits, dots,
+underscores and hyphens (no spaces or shell metacharacters). This restriction
+applies to the basename, not its parent directories.
+For both local and downloaded
+references, gzipped files are decompressed and plain FASTAs pass through
+directly. For an explicitly supplied `/refs/query.fa` (or `/refs/query.fa.gz`),
+the pipeline automatically selects these optional auxiliary files in `/refs`:
+
+| Index class         | Exact auxiliary filenames                                                               |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| FASTA index         | `query.fa.fai`                                                                          |
+| Sequence dictionary | `query.dict`                                                                            |
+| minimap2            | `query.mmi`                                                                             |
+| BWA-MEM3            | `query.fa.0123`, `query.fa.amb`, `query.fa.ann`, `query.fa.bwt.2bit.64`, `query.fa.pac` |
+
+For `.fasta` or `.fna`, retain that extension in FASTA/BWA sidecars and remove
+it for `.dict` and `.mmi`. Only exact regular readable auxiliary files are accepted;
+invalid existing auxiliary file paths fail validation. Missing index classes are built.
+An incomplete BWA-MEM3 set is rebuilt in full, never mixed with supplied sidecars.
+Gzip inputs use auxiliary files named for the **uncompressed** FASTA; `.gz.fai` and
+`.gzi` are not reused. Index/reference identity and binary compatibility are the
+user's responsibility. No host indexes are required, discovered or built.
+
+Downloaded references use the pinned nf-core WGET module; gzip decompression
+uses nf-core GUNZIP and indexing uses SAMTOOLS_FAIDX.
+Downloaded references, decompressed files and generated query FASTA indexes are
+published under `results/download` (or `<outdir>/download`). Generated
+dictionaries publish under `<outdir>/gatk4`, minimap2 indexes under `<outdir>/mm2i`,
+and the five generated BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
+Reused auxiliary files retain their original paths and are passed directly downstream,
+not copied into helper tasks or republished. Only the five exact BWA-MEM3 auxiliary files
+are passed, not their parent directory. Normal Nextflow task caching and `-resume`
+apply to generated indexes and downstream tasks without reference `storeDir`
+caching. Tasks consume reference channels, not the published copies.
+Reference outputs remain reusable value channels shared by all samples and intervals;
+when neither a local host file nor a host URL is supplied, an empty path value
+skips the host download. Use distinct reference basenames to avoid publication
+collisions in `<outdir>/download`.
+
+### Intervals
+
+Use the optional `--intervals` parameter to select a BED for core-read filtering,
+coverage and variant calling. It defaults to `assets/Pf3D7_core.bed`. The same
+BED is used for core regions and split by contig for variant-calling scatter.
+
+```bash
+nextflow run main.nf --intervals /path/selected.bed
+```
+
+Provide one local, uncompressed `.bed` file whose contigs and coordinates match
+the query reference. Its basename must start with a letter, digit or underscore
+and contain only letters, digits, dots, underscores and hyphens.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
