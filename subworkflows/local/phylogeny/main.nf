@@ -52,7 +52,7 @@ workflow PHYLOGENY {
         false
     ).fas
 
-        ch_sample_ids = ch_consensus_cohort
+    ch_sample_ids = ch_consensus_cohort
         .map { sample_ids, _fastas -> [sample_ids: sample_ids] }
 
     ch_aligned_contigs = mafft_s
@@ -69,8 +69,21 @@ workflow PHYLOGENY {
 
     concatenate_s = CONCATENATE_ALIGNED_CONTIGS(concatenate_input)
 
+    ch_iqtree_input = ch_sample_ids
+        .combine(concatenate_s.alignment)
+        .filter { sample_data, alignment ->
+            if (sample_data.sample_ids.size() < 3) {
+                log.info "Skipping IQ-TREE: phylogenetic inference requires at least 3 samples; found ${sample_data.sample_ids.size()}."
+                return false
+            }
+            true
+        }
+        .map { sample_data, alignment ->
+            tuple([id: 'cohort'], alignment, [])
+        }
+
     iqtree_s = IQTREE(
-        concatenate_s.alignment.map { alignment -> tuple([id: 'cohort'], alignment, []) },
+        ch_iqtree_input,
         [],
         [],
         [],
