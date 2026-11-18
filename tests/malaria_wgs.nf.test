@@ -1,0 +1,34 @@
+nextflow_pipeline {
+
+    name "Test malaria WGS pipeline"
+    script "../main.nf"
+    tag "malaria_wgs"
+
+    test("-profile test") {
+
+        when {
+            params {
+                input       = "${projectDir}/assets/samplesheet_malaria_wgs.csv"
+                query_fasta = "${projectDir}/assets/Plasmodium_falciparum.GCA000002765v3.dna.toplevel.fa"
+                queryurl    = null
+                genome      = null
+                intervals   = "${projectDir}/assets/malaria_wgs_test.bed"
+                outdir      = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+
+            assert workflow.success
+            assertAll({
+                assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pathogenepidemiology_software_mqc_versions.yml"),
+                    stable_path,
+                    stable_content
+                ).match()
+            })
+        }
+    }
+}
