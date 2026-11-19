@@ -10,3 +10,13 @@ null/
 .lineage/
 .nf-test/
 .nf-test.log
+
+# Include test fixtures for local phylogeny modules
+!modules/local/split_consensus_contigs/tests/data/
+!modules/local/split_consensus_contigs/tests/data/**
+!modules/local/concatenate_aligned_contigs/tests/data/
+!modules/local/concatenate_aligned_contigs/tests/data/**
+
+# Include real multi-contig phylogeny test data
+!subworkflows/local/phylogeny/tests/data/
+!subworkflows/local/phylogeny/tests/data/**

@@ -1,0 +1,52 @@
+nextflow_workflow {
+    name "Test Subworkflow PHYLOGENY with real multi-contig data"
+    script "../main.nf"
+    config "./nextflow.config"
+    workflow "PHYLOGENY"
+
+    test("Three samples across two contigs: consensus to concatenated phylogeny") {
+        when {
+            workflow {
+                """
+                def data = file("${moduleTestDir}/data/real_multi_contig")
+
+                def vcf = file("${moduleTestDir}/data/real_multi_contig/variants.vcf.gz")
+                def tbi = file("${moduleTestDir}/data/real_multi_contig/variants.vcf.gz.tbi")
+                def fasta = file("${moduleTestDir}/data/real_multi_contig/reference.fasta")
+                def fai = file("${moduleTestDir}/data/real_multi_contig/reference.fasta.fai")
+
+                input[0] = Channel.of(
+                    'sample_a',
+                    'sample_b',
+                    'sample_c'
+                ).map { id ->
+                    tuple([id: id], vcf, tbi, fasta, [])
+                }
+
+                input[1] = Channel.of(
+                    tuple([id: 'reference'], fai)
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                {
+
+                    def trees = workflow.out.phylogeny
+                    assert trees.size() == 1
+
+                    def tree = path(trees[0][1])
+                    assert tree.exists()
+                    assert tree.text.trim()
+
+                    ['sample_a', 'sample_b', 'sample_c'].each { sample ->
+                        assert tree.text.contains(sample)
+                    }
+                }
+           )
+        }
+    }
+}

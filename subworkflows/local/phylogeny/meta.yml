@@ -1,17 +1,22 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: phylogeny
-description: Generate consensus sequences, align them with MAFFT and infer a phylogeny with IQ-TREE.
+description: Generate consensus sequences, align each reference contig with MAFFT, concatenate the alignments in reference order and infer a cohort phylogeny with IQ-TREE.
 keywords:
   - consensus
   - alignment
   - phylogeny
+  - multi-contig
 components:
   - bcftools/consensus
+  - split/consensus/contigs
   - mafft/align
+  - concatenate/aligned/contigs
   - iqtree
 input:
   - ch_consensus_input:
       description: "Variant calls, index, reference and optional mask. Structure: [ val(meta), path(vcf), path(tbi), path(fasta), path(mask) ]"
+  - ch_reference_fai:
+      description: "Reference FASTA index used to split and concatenate contig alignments in reference order."
 output:
   - phylogeny:
       description: "IQ-TREE tree files for the cohort alignment. Structure: [ val(meta), path(treefile) ]"

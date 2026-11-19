@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process SPLIT_CONSENSUS_CONTIGS"
+    script "../main.nf"
+    process "SPLIT_CONSENSUS_CONTIGS"
+
+    tag "modules"
+    tag "split_consensus_contigs"
+
+    test("split multi-sample consensus FASTAs by contig") {
+
+        when {
+            process {
+                """
+                input[0] = [
+    ['sampleB', 'sampleA'],
+    [
+        file("${projectDir}/modules/local/split_consensus_contigs/tests/data/sampleB.fa"),
+        file("${projectDir}/modules/local/split_consensus_contigs/tests/data/sampleA.fa")
+    ],
+    file("${projectDir}/modules/local/split_consensus_contigs/tests/data/reference.fai")
+]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                {
+                    def outputs = process.out.contigs[0].sort { path(it).fileName.toString() }
+
+                    assert outputs.collect { path(it).fileName.toString() } == [
+                        'contig_000001.fa',
+                        'contig_000002.fa'
+                    ]
+
+                    assert path(outputs[0]).text ==
+    ">sampleB\nACGTTCGT\n>sampleA\nACGTACGT\n"
+
+assert path(outputs[1]).text ==
+    ">sampleB\nTTGACC\n>sampleA\nTTGGCC\n"
+                }
+            )
+        }
+    }
+}
