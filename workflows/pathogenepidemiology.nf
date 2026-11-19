@@ -7,9 +7,7 @@
 include { PREPARE_REFERENCES                   } from '../subworkflows/local/prepare_references'
 include { PREPARE_INTERVALS                    } from '../subworkflows/local/prepare_intervals/main'
 include { PREPROCESS_READS                     } from '../subworkflows/local/preprocess_reads'
-include { MINIMAP2_INDEX                       } from '../modules/nf-core/minimap2/index/main'
 include { MINIMAP2_ALIGN                       } from '../modules/nf-core/minimap2/align/main'
-include { BWAMEM3_INDEX                        } from '../modules/nf-core/bwamem3/index/main'
 include { BWAMEM3_MEM                          } from '../modules/nf-core/bwamem3/mem/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_MM2 } from '../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_BM3 } from '../modules/nf-core/samtools/stats/main'
@@ -48,7 +46,9 @@ workflow PATHOGENEPIDEMIOLOGY {
     //
     PREPARE_REFERENCES(
         params.queryurl,
-        params.hosturl
+        params.hosturl,
+        params.query_fasta,
+        params.host_fasta
     )
     PREPARE_INTERVALS(params.intervals, PREPARE_REFERENCES.out.queryfasta,
         PREPARE_REFERENCES.out.queryfai, PREPARE_REFERENCES.out.querydict)
@@ -87,7 +87,7 @@ workflow PATHOGENEPIDEMIOLOGY {
         .map { meta, reads, _platform -> [ meta, reads ] }
 
     // Alignment of long reads
-    def minimap2_index = MINIMAP2_INDEX(ch_queryfasta).index
+    def minimap2_index = PREPARE_REFERENCES.out.querymmi
     def aligned_l = MINIMAP2_ALIGN(
         ch_samples_l,
         minimap2_index,                 // reusable reference tuple
@@ -116,7 +116,7 @@ workflow PATHOGENEPIDEMIOLOGY {
         .map { meta, reads, _platform -> [ meta, reads ] }
 
     // Alignment of short reads
-    def bwamem3_index = BWAMEM3_INDEX(ch_queryfasta).index
+    def bwamem3_index = PREPARE_REFERENCES.out.querybwamem3
     def aligned_s = BWAMEM3_MEM(
         ch_samples_s,
         bwamem3_index,
@@ -137,6 +137,7 @@ workflow PATHOGENEPIDEMIOLOGY {
         ch_wgs_bam_s,
         ch_queryfasta,
         ch_queryfai,
+        PREPARE_REFERENCES.out.querydict,
         channel.value(file("${projectDir}/assets/Strains.2kb.vcf.gz", checkIfExists: true)),
         channel.value(file("${projectDir}/assets/Strains.2kb.vcf.gz.tbi", checkIfExists: true)),
         PREPARE_INTERVALS.out.core_bed,

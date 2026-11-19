@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: prepare_references
-description: Download query and optional host references, decompress the query and create its FASTA index and sequence dictionary.
+description: Prepare local or downloaded references, reusing adjacent query indexes and building missing index classes.
 keywords:
   - reference
   - fasta
@@ -10,20 +10,32 @@ components:
   - gunzip
   - samtools/faidx
   - gatk4/createsequencedictionary
+  - minimap2/index
+  - bwamem3/index
 input:
   - queryurl:
       type: string
-      description: URL of the gzip-compressed query FASTA.
+      description: URL of the plain or gzip-compressed query FASTA, used when query_fasta is absent.
   - hosturl:
       type: string
-      description: Optional URL of the host reference, retained in its downloaded format.
+      description: Optional URL of the plain or gzip-compressed host reference, used when host_fasta is absent.
+  - query_fasta:
+      type: string
+      description: Optional existing local FASTA overriding queryurl; exact adjacent uncompressed-name .fai, .dict, .mmi and complete BWA-MEM3 auxiliary files are reused.
+  - host_fasta:
+      type: string
+      description: Optional existing local .fa, .fasta or .fna file (optionally .gz), overriding hosturl.
 output:
   - queryfasta:
       description: "Decompressed query reference. Structure: [ val(meta), path(fasta) ]"
   - queryfai:
       description: "Query FASTA index. Structure: [ val(meta), path(fai) ]"
   - hostfasta:
-      description: Downloaded host reference file, without metadata or decompression, or an empty path value when absent.
+      description: Plain host reference path without metadata, or an empty path value when absent.
   - querydict:
       description: "Query sequence dictionary. Structure: [ val(meta), path(dict) ]"
+  - querymmi:
+      description: "Selected or built minimap2 index. Structure: [ val(meta), path(mmi) ]"
+  - querybwamem3:
+      description: "Five exact original BWA-MEM3 auxiliary file paths or a generated index directory. Structure: [ val(meta), path(index) ]"
 authors: []

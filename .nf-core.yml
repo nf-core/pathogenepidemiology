@@ -4,7 +4,8 @@ lint:
     - .github/workflows/branch.yml
     - assets/nf-core-pathogenepidemiology_logo_light.png
     - docs/images/nf-core-pathogenepidemiology_logo_dark.png
-nf_core_version: 4.2.1
+    - .github/workflows/linting.yml # Keep setup-nextflow pinned to a commit SHA.
+nf_core_version: 4.2.2
 repository_type: pipeline
 template:
   author: Igiraneza Clement, Bilal Asser, Firas Zemzem
