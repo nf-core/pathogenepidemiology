@@ -19,6 +19,12 @@
                     "description": "Optional local uncompressed BED matching the query reference, used unchanged for core-read filtering and coverage and split by GATK into one calling BED per contig. Defaults to projectDir/assets/Pf3D7_core.bed; basename must be shell-safe.",
                     "fa_icon": "far fa-file-code"
                 },
+                "skip_phylogeny": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip phylogenetic analysis.",
+                    "fa_icon": "fas fa-sitemap"
+                },
                 "query_fasta": {
                     "type": "string",
                     "format": "file-path",

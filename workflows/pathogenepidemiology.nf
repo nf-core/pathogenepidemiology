@@ -153,7 +153,10 @@ workflow PATHOGENEPIDEMIOLOGY {
         .map { cohort_meta, bcf, csi, sample_meta, fasta ->
             [ sample_meta, bcf, csi, fasta, [] ]
         }
-    def phylogeny_s = PHYLOGENY(ch_consensus_input)
+
+    if (!params.skip_phylogeny) {
+        def phylogeny_s = PHYLOGENY(ch_consensus_input)
+    }
 
     def ch_bcftools_stats = BCFTOOLS_STATS(
         varcalls_s,        // [meta, bcf, csi]
