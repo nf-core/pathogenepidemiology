@@ -12,4 +12,9 @@ report_section_order:
 
 export_plots: true
 
+extra_fn_clean_exts:
+  - type: regex
+    pattern: '\.filtlong(?:\.log)?$'
+    module: filtlong
+
 disable_version_detection: true

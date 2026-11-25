@@ -9,6 +9,8 @@ Initial release of nf-core/pathogenepidemiology, created with the [nf-core](http
 
 ### `Added`
 
+- Add ONT read preprocessing and competitive parasite-host alignment. Mapped primary parasite alignments that overlap the selected core BED are retained, and short-read preprocessing is unchanged.
+
 ### `Fixed`
 
 ### `Dependencies`

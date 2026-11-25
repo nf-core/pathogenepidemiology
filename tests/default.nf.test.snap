@@ -55,9 +55,6 @@
                 "GUNZIP_QUERYFASTA": {
                     "gunzip": 1.13
                 },
-                "MINIMAP2_INDEX": {
-                    "minimap2": "2.30-r1287"
-                },
                 "MOSDEPTH": {
                     "gzip": 1.14,
                     "mosdepth": "0.3.14"
@@ -136,8 +133,6 @@
                 "gatk4/genome.dict",
                 "gatk4/intervals",
                 "gatk4/intervals/0000-scattered.interval_list",
-                "mm2i",
-                "mm2i/genome.mmi",
                 "mosdepth",
                 "mosdepth/test1.mosdepth.global.dist.txt",
                 "mosdepth/test1.mosdepth.region.dist.txt",
@@ -374,7 +369,6 @@
                 "MT192765.1.bed:md5,d9aff0d15d0fa4f5d4df7a5b4bb92172",
                 "genome.dict:md5,7362679f176e0f52add03c08f457f646",
                 "0000-scattered.interval_list:md5,3c4370eaf1552dc8874df36a4912dd94",
-                "genome.mmi:md5,72e450f12dc691e763c697463bdb1571",
                 "test1.mosdepth.global.dist.txt:md5,24e5484122724950607b86f178f5ba75",
                 "test1.mosdepth.region.dist.txt:md5,24e5484122724950607b86f178f5ba75",
                 "test1.mosdepth.summary.txt:md5,5be897dd806eed5316da3f2e78f8272a",
@@ -463,10 +457,10 @@
                 ]
             ]
         ],
-        "timestamp": "2026-11-24T09:21:23.126657889",
+        "timestamp": "2026-11-25T12:16:16.584043893",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.6"
+            "nextflow": "26.10.3"
         }
     }
 }
