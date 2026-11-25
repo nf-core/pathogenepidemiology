@@ -1,0 +1,103 @@
+nextflow_process {
+
+    name "Test Process CONCATENATE_ALIGNED_CONTIGS"
+    script "../main.nf"
+    process "CONCATENATE_ALIGNED_CONTIGS"
+
+    tag "modules"
+    tag "concatenate_aligned_contigs"
+
+    test("concatenate contig alignments in reference order") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['sampleA', 'sampleB'],
+                    [
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/contig_000001.fas"),
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/contig_000002.fas")
+                    ],
+                    file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/reference.fai")
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                {
+                    def output = path(process.out.alignment[0])
+                    assert output.text ==
+                        ">sampleA\nACGTACGTTT-GCC\n>sampleB\nACGTTCGTTTGACC\n"
+                }
+            )
+        }
+    }
+
+        test("fail when aligned sequences have unequal lengths") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['sampleA', 'sampleB'],
+                    [
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/unequal_lengths/contig_000001.fas"),
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/contig_000002.fas")
+                    ],
+                    file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/reference.fai")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+
+        test("fail when an expected sample is missing") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['sampleA', 'sampleB'],
+                    [
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/missing_sample/contig_000001.fas"),
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/contig_000002.fas")
+                    ],
+                    file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/reference.fai")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+
+        test("fail when an expected contig alignment is missing") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['sampleA', 'sampleB'],
+                    [
+                        file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/contig_000001.fas")
+                    ],
+                    file("\${projectDir}/modules/local/concatenate_aligned_contigs/tests/data/reference.fai")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+}

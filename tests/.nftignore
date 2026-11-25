@@ -10,3 +10,18 @@ multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
 multiqc/multiqc_report.html
 fastqc/*_fastqc.{html,zip}
 pipeline_info/*.{html,json,txt,yml}
+genomicsdb
+genomicsdb/**
+# Runtime-dependent logs and reports
+clean_bams/*.dup.metrics
+trimmed/*.bbduk.log
+filtered/*.bbduk.log
+picard/*.pdf
+picard/*.txt
+# Variant files checked separately using nft-vcf
+varcalls/cohort.bcf.gz
+varcalls/cohort.bcf.gz.csi
+varcalls_by_chr/*.vcf.gz
+varcalls_by_chr/*.vcf.gz.tbi
+varcalls_gvcf/*.g.vcf.gz
+varcalls_gvcf/*.g.vcf.gz.tbi
