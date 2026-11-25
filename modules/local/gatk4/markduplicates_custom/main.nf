@@ -14,7 +14,8 @@ process GATK4_MARKDUPLICATES_CUSTOM {
     path core_bed
 
     output:
-    tuple val(meta), path("*.pf.bam"),     emit: bam // *pf* because everything outside core genome is removed
+    tuple val(meta), path("*.dedup.bam"),  emit: full_bam
+    tuple val(meta), path("*.pf.bam"),     emit: bam // BED-filtered BAM for downstream analysis
     tuple val(meta), path("*.pf.bam.bai"), emit: bai
     tuple val(meta), path("*.metrics"),    emit: metrics
     tuple val("${task.process}"), val('gatk4'),    eval("gatk --version | sed -n '/GATK.*v/s/.*v//p'"), topic: versions, emit: versions_gatk4
@@ -27,7 +28,7 @@ process GATK4_MARKDUPLICATES_CUSTOM {
     def args   = task.ext.args  ?: ''
     def args2  = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}.sorted.dup"
-    def prefix_bam = "${prefix}.bam"
+    def prefix_bam = "${prefix}.dedup.bam"
     def prefix_pf  = "${prefix}.pf.bam"
 
     def input_list = bam.collect { bam_ -> "--INPUT ${bam_}" }.join(' ')
@@ -54,12 +55,12 @@ process GATK4_MARKDUPLICATES_CUSTOM {
     samtools view -b ${args2} -L ${core_bed} -o ${prefix_pf} ${prefix_bam}
     samtools index ${prefix_pf}
 
-    rm ${prefix_bam}
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}.sorted.dup"
     """
+    touch ${prefix}.dedup.bam
     touch ${prefix}.pf.bam
     touch ${prefix}.pf.bam.bai
     touch ${prefix}.metrics

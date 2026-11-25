@@ -28,6 +28,7 @@ nextflow_process {
             assert process.success
             assertAll(
                 { assert snapshot(
+                    process.out.full_bam,
                     process.out.bam,
                     process.out.bai,
                     file(process.out.metrics[0][1]).name,
@@ -56,6 +57,7 @@ nextflow_process {
             assert process.success
             assertAll(
                 { assert snapshot(
+                    process.out.full_bam,
                     process.out.bam,
                     process.out.bai,
                     file(process.out.metrics[0][1]).name,
