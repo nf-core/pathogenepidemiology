@@ -26,8 +26,10 @@ and index filenames are retained without numbered staging aliases.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
-- [FastQC](#fastqc) - Raw read QC
-- [BBDuk](#bbduk) - Separate adapter trimming and contaminant filtering
+- [FastQC](#fastqc) - Raw read QC for non-ONT samples
+- [NanoPlot and Filtlong](#nanoplot-and-filtlong) - ONT raw read QC and length filtering
+- [BBDuk](#bbduk) - Non-ONT adapter trimming and contaminant filtering
+- [ONT alignment](#ont-alignment) - Competitive mapping and selection of primary parasite alignments
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
@@ -46,7 +48,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 ### BBDuk
 
-The single local `bbduk_custom` module runs as two distinct tasks,
+For non-ONT samples, the local `bbduk_custom` module runs as two distinct tasks,
 `BBDUK_TRIM` followed by `BBDUK_FILTER`.
 
 - `trimmed/`: adapter-trimmed `*_trimmed.fastq.gz`, `*.trimmed.bbduk.log`,
@@ -58,10 +60,43 @@ The single local `bbduk_custom` module runs as two distinct tasks,
   trimming them. For paired-end data the default BBDuk pair-removal policy is
   retained: a matching mate rejects the pair, so a rejected mate need not itself match.
 
-Only filtered reads go to downstream analysis. The preprocessing `bbduk_stats`
-and `bbduk_logs` channels contain both stages with distinct filenames;
-`bbduk_dropped` contains filtering rejects only, and `trim_dropped` contains
-trimming rejects separately.
+The preprocessing `bbduk_stats` and `bbduk_logs` channels contain reports from
+all BBDuk stages with distinct filenames. `bbduk_dropped` contains contaminant
+filtering rejects only. Trimming rejects are still published separately in `trimmed/`.
+
+### NanoPlot and Filtlong
+
+- `nanoplot/<run_accession>/`: Sample-prefixed NanoPlot reports, plots and
+  `*NanoStats.txt` from raw ONT reads. MultiQC includes these raw-read statistics.
+  MultiQC uses the original run ID to join NanoStats and ONT SAMtools metrics,
+  subject to MultiQC's filename cleaning. IDs containing recognised filename
+  tokens and custom sample-renaming or filename-cleaning settings can affect
+  the displayed names and joins.
+- `filtlong/`: `<run_accession>.filtlong.fastq.gz` and
+  `<run_accession>.filtlong.log`. The length-filtered FASTQ is the input to
+  competitive alignment and has not been filtered against a host reference.
+  MultiQC does not summarise the default length-only Filtlong run: its parser
+  requires a target base count in the log. The log remains available in `filtlong/`.
+
+### ONT alignment
+
+- `aligned_l/<run_accession>.bam` and `.bam.bai`: coordinate-sorted, indexed BAM
+  of mapped primary parasite alignments overlapping the core BED. Overlapping
+  alignments are retained untrimmed; off-core alignments are excluded. The
+  BAM header uses the parasite reference when no host is supplied. With a host,
+  it retains original contig IDs from the combined reference, including
+  host IDs, but no alignments to host contigs are retained. An empty result
+  still has a BAM and index.
+
+MultiQC's ONT SAMtools alignment statistics are computed from the retained BAM,
+not the combined alignment or the raw FASTQ. A selected alignment does not rule
+out host sequence in the read. No host-depleted FASTQ is produced. The competitive
+BAM is retained in the task work directory and is not published. The combined
+reference and minimap2 index are generated in task work directories and may also
+be published by process configuration.
+`FIND_CONCATENATE` orders the original
+parasite and host FASTAs by staged basename, so the combined reference may place
+host records before parasite records.
 
 ### MultiQC
 

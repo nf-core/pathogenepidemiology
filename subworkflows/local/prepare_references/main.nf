@@ -1,23 +1,25 @@
 include { WGET as DOWNLOAD_QUERYFASTA } from '../../../modules/nf-core/wget/main'
-include { WGET as DOWNLOAD_HOSTFASTA  } from '../../../modules/nf-core/wget/main'
+include { WGET as DOWNLOAD_HOSTFASTA } from '../../../modules/nf-core/wget/main'
 include { GUNZIP as GUNZIP_QUERYFASTA } from '../../../modules/nf-core/gunzip/main'
-include { GUNZIP as GUNZIP_HOSTFASTA  } from '../../../modules/nf-core/gunzip/main'
+include { GUNZIP as GUNZIP_HOSTFASTA } from '../../../modules/nf-core/gunzip/main'
 include { SAMTOOLS_FAIDX } from '../../../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY } from '../../../modules/nf-core/gatk4/createsequencedictionary/main'
+include { FIND_CONCATENATE } from '../../../modules/nf-core/find/concatenate/main'
+include { FALINT } from '../../../modules/nf-core/falint/main'
 include { MINIMAP2_INDEX } from '../../../modules/nf-core/minimap2/index/main'
 include { BWAMEM3_INDEX } from '../../../modules/nf-core/bwamem3/index/main'
 
 def localReference(value, option) {
     if (!(value instanceof CharSequence) || value.contains('://') || !(value ==~ /.+\.(fa|fasta|fna)(\.gz)?/)) {
-        error "--${option} must be a single local FASTA file (.fa, .fasta or .fna, optionally .gz)."
+        error("--${option} must be a single local FASTA file (.fa, .fasta or .fna, optionally .gz).")
     }
     def reference = file(value, checkIfExists: true, glob: false)
     if (!reference.isFile()) {
-        error "--${option} must be a single file: ${value}"
+        error("--${option} must be a single file: ${value}")
     }
     // Vendored processes interpolate staged basenames into shell commands.
     if (!(reference.name ==~ /[A-Za-z0-9_][A-Za-z0-9_.-]*/)) {
-        error "--${option} basename must start with a letter, digit or underscore and contain only letters, digits, dots, underscores and hyphens: ${reference.name}"
+        error("--${option} basename must start with a letter, digit or underscore and contain only letters, digits, dots, underscores and hyphens: ${reference.name}")
     }
     return tuple([id: reference.baseName], reference)
 }
@@ -34,6 +36,7 @@ workflow PREPARE_REFERENCES {
     hosturl
     query_fasta
     host_fasta
+    ch_ont_present // emits true once for ONT input, otherwise empty
 
     main:
     // Explicit local files take precedence independently; validate before launching tasks.
@@ -47,15 +50,13 @@ workflow PREPARE_REFERENCES {
         def referenceName = referenceFilename.replaceFirst(/\.(fa|fasta|fna)$/, '')
         auxiliaryFiles.fai = file(reference.resolveSibling("${referenceFilename}.fai"), checkIfExists: false, glob: false)
         auxiliaryFiles.dict = file(reference.resolveSibling("${referenceName}.dict"), checkIfExists: false, glob: false)
-        auxiliaryFiles.mmi = file(reference.resolveSibling("${referenceName}.mmi"), checkIfExists: false, glob: false)
         def bwa = ['0123', 'amb', 'ann', 'bwt.2bit.64', 'pac'].collect {
             file(reference.resolveSibling("${referenceFilename}.${it}"), checkIfExists: false, glob: false)
         }
         // A present but invalid auxiliary file (including a broken symlink) is an input error.
         (auxiliaryFiles.values() + bwa).each { asset ->
-            if (java.nio.file.Files.exists(asset, java.nio.file.LinkOption.NOFOLLOW_LINKS) &&
-                (!asset.isFile() || !java.nio.file.Files.isReadable(asset))) {
-                error "Reference auxiliary file must be a regular readable file: ${asset}"
+            if (java.nio.file.Files.exists(asset, java.nio.file.LinkOption.NOFOLLOW_LINKS) && (!asset.isFile() || !java.nio.file.Files.isReadable(asset))) {
+                error("Reference auxiliary file must be a regular readable file: ${asset}")
             }
         }
         // Treat BWA indexes as a complete set: never mix supplied and rebuilt auxiliary files.
@@ -70,23 +71,38 @@ workflow PREPARE_REFERENCES {
     if (host != null) {
         ch_host = local_host != null ? channel.value(host) : DOWNLOAD_HOSTFASTA(channel.value(host)).outfile
         def host_gzip = local_host != null ? host[1].extension == 'gz' : host[2] == 'gz'
-        hostfasta = (host_gzip ? GUNZIP_HOSTFASTA(ch_host).gunzip : ch_host)
-            .map { meta, fasta -> fasta }
-    } else {
+        hostfasta = (host_gzip ? GUNZIP_HOSTFASTA(ch_host).gunzip : ch_host).map { meta, fasta -> fasta }
+    }
+    else {
         hostfasta = channel.value([])
     }
     def query_gzip = local_query != null ? query[1].extension == 'gz' : query[2] == 'gz'
-    queryfasta = (query_gzip ? GUNZIP_QUERYFASTA(ch_query).gunzip : ch_query)
-        .map { meta, fasta -> tuple([id: fasta.baseName], fasta) }
+    queryfasta = (query_gzip ? GUNZIP_QUERYFASTA(ch_query).gunzip : ch_query).map { meta, fasta -> tuple([id: fasta.baseName], fasta) }
     queryfai = auxiliaryFiles.fai?.exists()
         ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.fai) }
         : SAMTOOLS_FAIDX(queryfasta.map { meta, fasta -> tuple(meta, fasta, []) }, false).fai
     querydict = auxiliaryFiles.dict?.exists()
         ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.dict) }
         : GATK4_CREATESEQUENCEDICTIONARY(queryfasta).dict
-    querymmi = auxiliaryFiles.mmi?.exists()
-        ? queryfasta.map { meta, fasta -> tuple(meta, auxiliaryFiles.mmi) }
-        : MINIMAP2_INDEX(queryfasta).index
+    // ONT-only work is gated by raw sample presence, independently of Filtlong.
+    def ont_query = queryfasta.combine(ch_ont_present).map { meta, fasta, _present -> tuple(meta, fasta) }
+    if (host != null) {
+        FIND_CONCATENATE(
+            ont_query.combine(hostfasta).map { _meta, parasite, host_reference -> tuple([id: 'parasite_host'], [parasite, host_reference]) }
+        )
+        FALINT(FIND_CONCATENATE.out.file_out)
+        FALINT.out.error_log.subscribe { meta, log ->
+            error("Invalid ${meta.id} FASTA (FALINT):\n${log.text.trim()}")
+        }
+        ont_reference = FIND_CONCATENATE.out.file_out
+            .join(FALINT.out.success_log, failOnMismatch: false)
+            .map { meta, fasta, _success_log -> tuple(meta, fasta) }
+    }
+    else {
+        ont_reference = ont_query
+    }
+    MINIMAP2_INDEX(ont_reference)
+
     // BWAMEM3_MEM accepts path collections as well as generated index directories.
     // Stage only the exact five auxiliary files, never their parent with unrelated indexes.
     querybwamem3 = auxiliaryFiles.bwa != null
@@ -97,7 +113,7 @@ workflow PREPARE_REFERENCES {
     queryfasta
     queryfai
     querydict
-    querymmi
     querybwamem3
     hostfasta
+    ont_index = MINIMAP2_INDEX.out.index.first()
 }

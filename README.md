@@ -78,7 +78,8 @@ For more details about the output files and reports, please refer to the
 
 ## Pipeline input
 
-To run this pipeline, you will need a reference genome for both your pathogen of interest, and its host.
+Supply a reference genome for the pathogen of interest. Add a host reference
+to enable competitive ONT alignment.
 
 We will patch this out before release, but `pathogenepidemiology` developers can get reference genome data with:
 

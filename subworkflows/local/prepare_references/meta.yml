@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: prepare_references
-description: Prepare local or downloaded references, reusing adjacent query indexes and building missing index classes.
+description: Prepare local or downloaded references, reusing adjacent query indexes and building a shared minimap2 index when ONT reads are present.
 keywords:
   - reference
   - fasta
@@ -10,8 +10,10 @@ components:
   - gunzip
   - samtools/faidx
   - gatk4/createsequencedictionary
-  - minimap2/index
   - bwamem3/index
+  - find/concatenate
+  - falint
+  - minimap2/index
 input:
   - queryurl:
       type: string
@@ -21,10 +23,12 @@ input:
       description: Optional URL of the plain or gzip-compressed host reference, used when host_fasta is absent.
   - query_fasta:
       type: string
-      description: Optional existing local FASTA overriding queryurl; exact adjacent uncompressed-name .fai, .dict, .mmi and complete BWA-MEM3 auxiliary files are reused.
+      description: Optional existing local FASTA overriding queryurl; exact adjacent uncompressed-name .fai, .dict and complete BWA-MEM3 auxiliary files are reused.
   - host_fasta:
       type: string
       description: Optional existing local .fa, .fasta or .fna file (optionally .gz), overriding hosturl.
+  - ch_ont_present:
+      description: Emits true once when the validated samplesheet contains ONT reads; otherwise empty.
 output:
   - queryfasta:
       description: "Decompressed query reference. Structure: [ val(meta), path(fasta) ]"
@@ -34,8 +38,8 @@ output:
       description: Plain host reference path without metadata, or an empty path value when absent.
   - querydict:
       description: "Query sequence dictionary. Structure: [ val(meta), path(dict) ]"
-  - querymmi:
-      description: "Selected or built minimap2 index. Structure: [ val(meta), path(mmi) ]"
   - querybwamem3:
       description: "Five exact original BWA-MEM3 auxiliary file paths or a generated index directory. Structure: [ val(meta), path(index) ]"
+  - ont_index:
+      description: "Shared ONT minimap2 index of the query FASTA alone or the validated combined query and host FASTA. Structure: [ val(meta), path(index) ]"
 authors: []

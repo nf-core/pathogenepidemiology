@@ -1,6 +1,6 @@
 nextflow_workflow {
 
-    name "Test BBDUK_CUSTOM reuse in PREPROCESS_READS"
+    name "Test platform-specific PREPROCESS_READS"
     script "../main.nf"
     workflow "PREPROCESS_READS"
 
@@ -25,7 +25,73 @@ nextflow_workflow {
         then {
             assert workflow.success
             assert workflow.out.reads_clean.size() == 1
+            assert workflow.out.fastqc.size() == 1
+            assert workflow.out.nanoplot.isEmpty()
+            assert workflow.out.filtlong_log.isEmpty()
+            assert workflow.out.ont_reads.isEmpty()
+            assert workflow.trace.tasks().collect { it.name.split(' ')[0] }.sort() ==
+                ['PREPROCESS_READS:BBDUK_FILTER', 'PREPROCESS_READS:BBDUK_TRIM', 'PREPROCESS_READS:FASTQC']
             assert snapshot(workflow.out.reads_clean).match()
+        }
+    }
+
+    test("ONT preprocessing emits FASTQ and QC without any host or alignment tasks") {
+        options "-stub-run"
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                '''
+                def reads = file(params.modules_testdata_base_path + 'genomics/sarscov2/nanopore/fastq/test.fastq.gz', checkIfExists: true)
+                input[0] = Channel.of(tuple([id: 'ont', single_end: true, instrument_platform: 'OXFORD_NANOPORE'], [reads]))
+                input[1] = Channel.value([])
+                '''
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.reads_clean.isEmpty()
+            assert workflow.out.ont_reads.size() == 1
+            def (meta, fastq) = workflow.out.ont_reads[0]
+            assert meta.id == 'ont'
+            assert file(fastq).name == 'ont.filtlong.fastq.gz'
+            assert workflow.out.nanoplot.size() == 1
+            assert workflow.out.filtlong_log.size() == 1
+            assert workflow.trace.tasks().collect { it.name.split(' ')[0] }.toSet() ==
+                ['PREPROCESS_READS:NANOPLOT', 'PREPROCESS_READS:FILTLONG'].toSet()
+        }
+    }
+
+    test("non-ONT fallback uses the short-read preprocessor") {
+        options "-stub-run"
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                '''
+                def read1 = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
+                input[0] = Channel.of(
+                    tuple([id: 'dnbseq', single_end: true, instrument_platform: 'DNBSEQ'], [read1]),
+                    tuple([id: 'fallback', single_end: true, instrument_platform: 'UNKNOWN'], [read1])
+                )
+                input[1] = Channel.value([])
+                '''
+            }
+        }
+        then {
+            assert workflow.success
+            def ids = { rows -> rows.collect { it[0].id }.sort() }
+            def shortIds = ['dnbseq', 'fallback']
+            assert ids(workflow.out.reads_clean) == shortIds
+            assert ids(workflow.out.fastqc) == shortIds
+            assert workflow.out.nanoplot.isEmpty()
+            assert workflow.out.ont_reads.isEmpty()
+            assert ids(workflow.out.bbduk_dropped) == shortIds
+            assert ids(workflow.out.bbduk_stats) == (shortIds + shortIds).sort()
+            assert ids(workflow.out.bbduk_logs) == (shortIds + shortIds).sort()
+            assert !workflow.trace.tasks().any { it.name ==~ /PREPROCESS_READS:(NANOPLOT|FILTLONG)( .*)?/ }
         }
     }
 }

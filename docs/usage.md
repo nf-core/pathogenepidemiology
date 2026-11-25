@@ -10,7 +10,39 @@
 
 ### Read preprocessing
 
-Preprocessing invokes the single local `bbduk_custom` module twice under
+Samples with `instrument_platform` set to `OXFORD_NANOPORE` use the long-read
+branch of `PREPROCESS_READS`. Provide one gzipped FASTQ in `fastq_1` and leave
+`fastq_2` empty. NanoPlot summarises raw reads and Filtlong independently
+removes reads shorter than 100 bases (`--min_length 100`). No quality threshold, target base count or
+retention percentage is applied by default. This step does not trim adapters;
+use adapter-trimmed input if needed. BBDuk does not run on the ONT branch.
+With `--host_fasta` or `--hosturl`, `PREPARE_REFERENCES` concatenates the original parasite and host FASTAs
+without rewriting contig IDs, descriptions or sequences, and validates the
+combined FASTA with FALINT. `FIND_CONCATENATE` stages the originals into
+`to_concatenate/` and orders them by staged basename, so parasite-first order is
+not guaranteed. Per-file emptiness, trailing-newline and parasite-FAI
+consistency are not checked before concatenation; supply valid reference FASTAs
+and a `.fai` that matches the parasite FASTA (or omit the `.fai` so one is
+built). FALINT rejects empty records and duplicate contig IDs (the first token
+of each header), including collisions between parasite and host records.
+`PREPARE_REFERENCES` builds one shared minimap2 index when FALINT emits a
+success log; an error log fails the workflow. Log contents are not used to
+validate success. The upstream wrapper can suppress `fa-lint`'s exit status and
+discard stderr (for example, a diagnostic without a trailing newline). If the
+wrapper emits a success log and no error log, the workflow cannot recover that
+status or diagnostic.
+The main workflow aligns Filtlong reads against it with the `map-ont` preset. If IDs
+collide, use references with disjoint IDs before running the pipeline.
+A separate nf-core SAMtools View step retains only mapped primary alignments
+overlapping the selected core BED, which must contain only parasite intervals
+and is passed unchanged to SAMtools. An overlapping
+alignment is retained untrimmed; off-core and host alignments are excluded.
+There is no MAPQ cutoff.
+This is an alignment-based selection, not a guarantee that retained reads
+contain no host sequence. No host-depleted FASTQ or ONT variant calls are produced.
+
+For other platforms, the pipeline runs FastQC and invokes the local
+`bbduk_custom` module twice under
 distinct aliases, creating two BBDuk tasks per sample: `BBDUK_TRIM` trims against
 `assets/adapters.fa` only (`ktrim=r`), then `BBDUK_FILTER` filters against
 the built-in PhiX reference plus the supplied host reference (`ktrim=f`).
@@ -22,16 +54,20 @@ this changes k-mer length and matching/search settings and removes `prealloc=t`
 and `-da`. The stage split and these filtering parameter changes are distinct
 changes; read retention alone does not establish filtering specificity.
 
-The preprocessing subworkflow accepts an empty contaminant channel or `[]`
-for PhiX-only filtering, or a path/list of paths for additional references.
-The full pipeline obtains the host reference from `--host_fasta` or `hosturl`.
+The `PREPROCESS_READS` subworkflow branches by instrument platform and emits
+separate filtered FASTQ streams for ONT and non-ONT samples. The main
+workflow handles competitive alignment and BAM postprocessing after ONT read
+preprocessing, alongside the separate short-read alignment track. When neither
+host option is set, short reads still undergo PhiX filtering and ONT reads align
+to the parasite genome alone. The same core BED filter and BAM indexing apply.
 
 ### Reference FASTA inputs
 
 Use `--query_fasta /path/reference.fa` and/or `--host_fasta /path/host.fa.gz`
-to supply local references. Both parameters are optional and independent:
-each supplied file skips its corresponding `queryurl` or `hosturl` download;
-omitting either file retains that URL's configured default.
+to supply local references. Each supplied file independently skips its
+corresponding `queryurl` or `hosturl` download; omitting either file retains
+that URL's configured default. Make sure the configured host is correct
+for your samples.
 
 Each parameter accepts one existing file with extension `.fa`, `.fasta` or
 `.fna`, optionally compressed with gzip (`.gz`). Local file basenames must start
@@ -47,23 +83,23 @@ the pipeline automatically selects these optional auxiliary files in `/refs`:
 | ------------------- | --------------------------------------------------------------------------------------- |
 | FASTA index         | `query.fa.fai`                                                                          |
 | Sequence dictionary | `query.dict`                                                                            |
-| minimap2            | `query.mmi`                                                                             |
 | BWA-MEM3            | `query.fa.0123`, `query.fa.amb`, `query.fa.ann`, `query.fa.bwt.2bit.64`, `query.fa.pac` |
 
 For `.fasta` or `.fna`, retain that extension in FASTA/BWA sidecars and remove
-it for `.dict` and `.mmi`. Only exact regular readable auxiliary files are accepted;
+it for `.dict`. Only exact regular readable auxiliary files are accepted;
 invalid existing auxiliary file paths fail validation. Missing index classes are built.
 An incomplete BWA-MEM3 set is rebuilt in full, never mixed with supplied sidecars.
 Gzip inputs use auxiliary files named for the **uncompressed** FASTA; `.gz.fai` and
 `.gzi` are not reused. Index/reference identity and binary compatibility are the
-user's responsibility. No host indexes are required, discovered or built.
+user's responsibility. The competitive ONT index is generated in the task work
+directory; no prebuilt minimap2 or standalone host indexes are used.
 
 Downloaded references use the pinned nf-core WGET module; gzip decompression
 uses nf-core GUNZIP and indexing uses SAMTOOLS_FAIDX.
 Downloaded references, decompressed files and generated query FASTA indexes are
 published under `results/download` (or `<outdir>/download`). Generated
-dictionaries publish under `<outdir>/gatk4`, minimap2 indexes under `<outdir>/mm2i`,
-and the five generated BWA-MEM3 sidecars under `<outdir>/bw3i/bwamem3`.
+dictionaries publish under `<outdir>/gatk4`, and the five generated BWA-MEM3
+sidecars under `<outdir>/bw3i/bwamem3`.
 Reused auxiliary files retain their original paths and are passed directly downstream,
 not copied into helper tasks or republished. Only the five exact BWA-MEM3 auxiliary files
 are passed, not their parent directory. Normal Nextflow task caching and `-resume`
@@ -71,21 +107,25 @@ apply to generated indexes and downstream tasks without reference `storeDir`
 caching. Tasks consume reference channels, not the published copies.
 Reference outputs remain reusable value channels shared by all samples and intervals;
 when neither a local host file nor a host URL is supplied, an empty path value
-skips the host download. Use distinct reference basenames to avoid publication
-collisions in `<outdir>/download`.
+skips the host download. Use distinct parasite and host reference basenames
+after decompression to avoid staging and publication collisions.
 
 ### Intervals
 
-Use the optional `--intervals` parameter to select a BED for core-read filtering,
-coverage and variant calling. It defaults to `assets/Pf3D7_core.bed`. The same
-BED is used for core regions and split by contig for variant-calling scatter.
+Use the optional `--intervals` parameter to select a BED for ONT and short-read
+core filtering, short-read coverage and variant calling. If neither the
+command line nor the active configuration sets `intervals`, the pipeline uses
+`assets/Pf3D7_core.bed`, not the whole reference. For a different query
+reference, provide a matching BED. The same BED is split by contig for
+variant-calling scatter.
 
 ```bash
 nextflow run main.nf --intervals /path/selected.bed
 ```
 
 Provide one local, uncompressed `.bed` file whose contigs and coordinates match
-the query reference. Its basename must start with a letter, digit or underscore
+the query reference and contain only parasite intervals; the pipeline does not
+filter out host intervals. Its basename must start with a letter, digit or underscore
 and contain only letters, digits, dots, underscores and hyphens.
 
 ## Samplesheet input

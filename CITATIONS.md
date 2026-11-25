@@ -22,6 +22,10 @@
 
   > Andrews S. FastQC: A Quality Control Tool for High Throughput Sequence Data [Online]. Available at: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/ (2010).
 
+- [Filtlong](https://github.com/rrwick/Filtlong)
+
+  > Wick RR. Filtlong: quality filtering tool for long reads.
+
 - [GATK](https://pubmed.ncbi.nlm.nih.gov/20644199/)
 
   > McKenna A, Hanna M, Banks E, Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D, Gabriel S, Daly M, DePristo MA. The Genome Analysis Toolkit: a MapReduce framework for analyzing next-generation DNA sequencing data. Genome Res. 2010 Sep;20(9):1297-303. doi: 10.1101/gr.107524.110. PMID: 20644199; PMCID: PMC2928508.
@@ -41,6 +45,10 @@
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+
+- [NanoPlot](https://pubmed.ncbi.nlm.nih.gov/29547981/)
+
+  > De Coster W, D'Hert S, Schultz DT, Cruts M, Van Broeckhoven C. NanoPack: visualizing and processing long-read sequencing data. Bioinformatics. 2018 Aug 1;34(15):2666-2669. doi: 10.1093/bioinformatics/bty149.
 
 - [SAMtools](https://pubmed.ncbi.nlm.nih.gov/33590861/)
   > Danecek P, Bonfield JK, Liddle J, Marshall J, Ohan V, Pollard MO, Whitwham A, Keane T, McCarthy SA, Davies RM, Li H. Twelve years of SAMtools and BCFtools. GigaScience. 2021 Feb 16;10(2):giab008. doi: 10.1093/gigascience/giab008. PMID: 33590861; PMCID: PMC7931819.
