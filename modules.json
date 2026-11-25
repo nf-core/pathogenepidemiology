@@ -60,9 +60,24 @@
                         "git_sha": "6e35088c79c7cf8fe69a83f8fe4264ec18d2b787",
                         "installed_by": ["modules"]
                     },
+                    "falint": {
+                        "branch": "master",
+                        "git_sha": "9aa0460e0ce33941b967f16289f53e84fa1ac810",
+                        "installed_by": ["modules"]
+                    },
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "18eb358065b06f2d3419e37383b002fe7db3da02",
+                        "installed_by": ["modules"]
+                    },
+                    "filtlong": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "find/concatenate": {
+                        "branch": "master",
+                        "git_sha": "9aa0460e0ce33941b967f16289f53e84fa1ac810",
                         "installed_by": ["modules"]
                     },
                     "gatk4/applyvqsr": {
@@ -150,6 +165,11 @@
                         "git_sha": "98403d15b0e50edae1f3fec5eae5e24982f1fade",
                         "installed_by": ["modules"]
                     },
+                    "nanoplot": {
+                        "branch": "master",
+                        "git_sha": "574ad1868a466e73d0f5ef8c139a260fbf2d8b9c",
+                        "installed_by": ["modules"]
+                    },
                     "picard/collectinsertsizemetrics": {
                         "branch": "master",
                         "git_sha": "fe08122c3dc2f2d7890daba06f6c90e570ef01de",
@@ -178,6 +198,11 @@
                     "samtools/stats": {
                         "branch": "master",
                         "git_sha": "9339809fcb90af8a8b7051e6cd914894d5c52002",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/view": {
+                        "branch": "master",
+                        "git_sha": "9aa0460e0ce33941b967f16289f53e84fa1ac810",
                         "installed_by": ["modules"]
                     },
                     "untar": {
