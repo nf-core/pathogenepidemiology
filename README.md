@@ -94,7 +94,7 @@ nextflow run workflows/download_references.nf -profile docker --validation_monoc
 
 ## Credits
 
-nf-core/pathogenepidemiology was originally written by Igiraneza Clement, Bilal Asser, Firas Zemzem.
+nf-core/pathogenepidemiology was originally written by Igiraneza Clement, Bilal Asser, Victor Duarte.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
