@@ -97,6 +97,7 @@ jobs:
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
           NXF_VERSION: ${{ matrix.NXF_VER }}
+          DIAGNOSTIC_CAPTURE: ${{ matrix.profile == 'docker' && matrix.NXF_VER == '25.10.4' && matrix.shard == '6' }}
         with:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
