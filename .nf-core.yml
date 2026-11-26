@@ -8,7 +8,7 @@ lint:
 nf_core_version: 4.2.2
 repository_type: pipeline
 template:
-  author: Igiraneza Clement, Bilal Asser, Firas Zemzem
+  author: Igiraneza Clement, Bilal Asser, Victor Duarte
   description: A profile-based pipeline for genomic epidemiological analysis of predefined
     pathogens.
   force: false
