@@ -98,6 +98,7 @@ jobs:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
           NXF_VERSION: ${{ matrix.NXF_VER }}
           DIAGNOSTIC_CAPTURE: ${{ matrix.profile == 'docker' && matrix.NXF_VER == '25.10.4' && matrix.shard == '6' }}
+          BWAMEM3_FORCE_TIER: ${{ matrix.profile == 'docker' && matrix.NXF_VER == '25.10.4' && matrix.shard == '6' && 'avx2' || '' }}
         with:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
