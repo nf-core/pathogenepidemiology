@@ -103,7 +103,67 @@ runs:
         else
           echo "| ⚠️ | No test results found | ${{ inputs.profile }} | ${{ inputs.shard }}/${{ inputs.total_shards }} |" >> $GITHUB_STEP_SUMMARY
         fi
+    - name: Collect malaria WGS diagnostics
+      if: ${{ always() && env.DIAGNOSTIC_CAPTURE == 'true' }}
+      shell: bash
+      run: |
+        DIAG_ROOT="$GITHUB_WORKSPACE/~/tests/9ef673cb3ea078c3a831c860bff579/work"
+        DIAG_DIR="$RUNNER_TEMP/pathogenepidemiology-diagnostics"
+        mkdir -p "$DIAG_DIR"
 
+        if [ ! -d "$DIAG_ROOT" ]; then
+          echo "nf-test work directory not found: $DIAG_ROOT"
+          exit 0
+        fi
+
+        CHECKSUM_REPORT="$DIAG_ROOT/.malaria-reference-index-checksums.txt"
+        {
+          echo "Reference FASTA and BWA-MEM3 index checksums"
+          echo "Generated: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo
+          while IFS= read -r -d '' file; do
+            if [ -f "$file" ]; then
+              echo "File: ${file#"$DIAG_ROOT"/}"
+              stat -c "Size: %s bytes" "$file"
+              sha256sum "$file"
+              echo
+            fi
+          done < <(
+            find "$DIAG_ROOT" \( -type f -o -type l \) \
+              \( -name 'Pf3D7_chr1.fa' -o -name 'Pf3D7_chr1.fa.*' \) \
+              -print0 | sort -z
+          )
+        } > "$CHECKSUM_REPORT"
+
+        cd "$DIAG_ROOT"
+        find . -type f \( \
+          -name '*.bam' -o \
+          -name '*.bai' -o \
+          -name '*.csi' -o \
+          -name '*.stats' -o \
+          -name '*.stats.txt' -o \
+          -name '.command.log' -o \
+          -name '.command.err' -o \
+          -name '.command.out' -o \
+          -name '.malaria-reference-index-checksums.txt' \
+        \) -print0 > "$DIAG_DIR/files.txt"
+
+        if [ -s "$DIAG_DIR/files.txt" ]; then
+          tar --null -czf "$DIAG_DIR/malaria-wgs-diagnostics.tar.gz" \
+            -T "$DIAG_DIR/files.txt"
+          echo "Diagnostic archive created."
+        else
+          echo "No matching diagnostic files found."
+        fi
+
+    - name: Upload malaria WGS diagnostics
+      if: ${{ always() && env.DIAGNOSTIC_CAPTURE == 'true' }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+      with:
+        name: malaria-wgs-shard6-diagnostics
+        path: ${{ runner.temp }}/pathogenepidemiology-diagnostics/malaria-wgs-diagnostics.tar.gz
+        if-no-files-found: warn
+        retention-days: 3
     - name: Clean up
       if: always()
       shell: bash

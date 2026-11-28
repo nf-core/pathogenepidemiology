@@ -7,7 +7,16 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bam.pf.bam:md5,2a7c3bbd07bc6705ed0579a682413989"
+                    "test.bam.dedup.bam:md5,d0bee6fe5a3bdc3acb3653146c674311"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": false
+                    },
+                    "test.bam.pf.bam:md5,fd92b8962ca2f9e96fab11407ecb936e"
                 ]
             ],
             [
@@ -37,10 +46,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-14T17:21:21.675979284",
+        "timestamp": "2026-11-19T14:48:59.416467334",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.10.0"
+            "nextflow": "26.04.6"
         }
     },
     "sarscov2 - bam with reference": {
@@ -51,7 +60,16 @@
                         "id": "test",
                         "single_end": false
                     },
-                    "test.bam.pf.bam:md5,1ff6f69759044a70e94aedc4041d8625"
+                    "test.bam.dedup.bam:md5,877152fdd68147b267a3256b5eaec3a2"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": false
+                    },
+                    "test.bam.pf.bam:md5,a2d9467335a2574e8548c196bac0e083"
                 ]
             ],
             [
@@ -81,10 +99,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-14T17:23:47.365793552",
+        "timestamp": "2026-11-19T14:50:01.635180396",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.10.0"
+            "nextflow": "26.04.6"
         }
     },
     "stub": {
@@ -96,7 +114,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.bam.pf.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.bam.dedup.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "1": [
@@ -105,7 +123,7 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.bam.pf.bam.bai:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.bam.pf.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "2": [
@@ -114,17 +132,26 @@
                             "id": "test",
                             "single_end": false
                         },
-                        "test.bam.metrics:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test.bam.pf.bam.bai:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "3": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.metrics:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
                     [
                         "GATK4_MARKDUPLICATES_CUSTOM",
                         "gatk4",
                         "4.6.2.0"
                     ]
                 ],
-                "4": [
+                "5": [
                     [
                         "GATK4_MARKDUPLICATES_CUSTOM",
                         "samtools",
@@ -147,6 +174,15 @@
                             "single_end": false
                         },
                         "test.bam.pf.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "full_bam": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.bam.dedup.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "metrics": [
@@ -174,10 +210,10 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-14T17:26:05.915049834",
+        "timestamp": "2026-11-19T14:50:44.288956455",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.10.0"
+            "nextflow": "26.04.6"
         }
     }
 }

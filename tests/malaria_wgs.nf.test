@@ -1,0 +1,59 @@
+nextflow_pipeline {
+
+    name "Test malaria WGS pipeline"
+    script "../main.nf"
+    tag "malaria_wgs"
+
+    test("-profile test") {
+
+        when {
+            params {
+                skip_phylogeny = false
+                input       = "${projectDir}/assets/samplesheet_malaria_wgs.csv"
+                query_fasta = null
+                queryurl    = 'https://raw.githubusercontent.com/nf-core/test-datasets/7dc93bf920aa9d8b87620915900e5bae3b9bf601/data/plasmodium_falciparum/reference/Pf3D7_chr1.fa'
+                genome      = null
+                def bedUrl = 'https://raw.githubusercontent.com/nf-core/test-datasets/7dc93bf920aa9d8b87620915900e5bae3b9bf601/data/plasmodium_falciparum/reference/Pf3D7_chr1.bed'
+                def localBed = new File("${System.getProperty('java.io.tmpdir')}/Pf3D7_chr1_${UUID.randomUUID()}.bed")
+                localBed.text = new URL(bedUrl).text
+                assert localBed.exists() && localBed.length() > 0
+                localBed.deleteOnExit()
+                intervals   = localBed.absolutePath
+                outdir      = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_path = getAllFilesFromDir(
+                params.outdir,
+                relative: true,
+                includeDir: true,
+                ignore: ['pipeline_info/*.{html,json,txt}', 'genomicsdb', 'genomicsdb/**']
+            )
+            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+
+            def requiredOutputs = [
+                "$outputDir/bcftools/ERR10375861.fa",
+                "$outputDir/bcftools/ERR10375871.fa",
+                "$outputDir/bcftools/ERR10375886.fa",
+                "$outputDir/varcalls/cohort.bcf.gz",
+                "$outputDir/mafft/contig_000001.fas",
+                "$outputDir/concatenate/cohort.concatenated.fas",
+                "$outputDir/iqtree/cohort.treefile"
+            ]
+
+            assert workflow.success
+            assert requiredOutputs.every { path ->
+                def file = new File(path)
+                file.isFile() && file.length() > 0
+            }
+            assertAll({
+                assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pathogenepidemiology_software_mqc_versions.yml"),
+                    stable_path,
+                    stable_content
+                ).match()
+            })
+        }
+    }
+}

@@ -65,7 +65,7 @@ workflow GATK_MOI {
     ch_dedup_bam = GATK4_MARKDUPLICATES_CUSTOM.out.bam.join(GATK4_MARKDUPLICATES_CUSTOM.out.bai, by: 0)
 
     PICARD_COLLECTINSERTSIZEMETRICS(
-        ch_dedup_bam.map { meta, bam, _bai -> tuple(meta, bam) }
+        GATK4_MARKDUPLICATES_CUSTOM.out.full_bam
     )
 
     ch_mosdepth_input = ch_dedup_bam.combine(ch_core_bed)
