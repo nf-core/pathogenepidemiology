@@ -116,6 +116,25 @@ runs:
           exit 0
         fi
 
+        CHECKSUM_REPORT="$DIAG_ROOT/.malaria-reference-index-checksums.txt"
+        {
+          echo "Reference FASTA and BWA-MEM3 index checksums"
+          echo "Generated: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo
+          while IFS= read -r -d '' file; do
+            if [ -f "$file" ]; then
+              echo "File: ${file#"$DIAG_ROOT"/}"
+              stat -c "Size: %s bytes" "$file"
+              sha256sum "$file"
+              echo
+            fi
+          done < <(
+            find "$DIAG_ROOT" \( -type f -o -type l \) \
+              \( -name 'Pf3D7_chr1.fa' -o -name 'Pf3D7_chr1.fa.*' \) \
+              -print0 | sort -z
+          )
+        } > "$CHECKSUM_REPORT"
+
         cd "$DIAG_ROOT"
         find . -type f \( \
           -name '*.bam' -o \
@@ -125,7 +144,8 @@ runs:
           -name '*.stats.txt' -o \
           -name '.command.log' -o \
           -name '.command.err' -o \
-          -name '.command.out' \
+          -name '.command.out' -o \
+          -name '.malaria-reference-index-checksums.txt' \
         \) -print0 > "$DIAG_DIR/files.txt"
 
         if [ -s "$DIAG_DIR/files.txt" ]; then
